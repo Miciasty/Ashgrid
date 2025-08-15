@@ -11,19 +11,22 @@ public final class FloodFillQueue implements FloodFill {
     @Override public String id() { return "floodfill-queue"; }
 
     private record P(int x,int y,int z){}
+    private static final int[][] N6 = { {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1} };
 
     @Override
     public int fill(ReadableGrid3i g, int sx, int sy, int sz,
                     IntPredicate canVisit, CellConsumer visit) {
         if (!g.inside(sx,sy,sz)) return 0;
 
-        boolean[] seen = new boolean[g.width() * g.height() * g.depth()];
-        ArrayDeque<P> q = new ArrayDeque<>();
-        int count = 0;
+        final int w = g.width(), h = g.height(), d = g.depth();
+        final int wh = w * h;
+        final boolean[] seen = new boolean[w * h * d];
 
+        final ArrayDeque<P> q = new ArrayDeque<>();
+        seen[idx(w,wh,sx,sy,sz)] = true;
         q.add(new P(sx,sy,sz));
-        seen[index(g, sx,sy,sz)] = true;
 
+        int count = 0;
         while (!q.isEmpty()) {
             P p = q.removeFirst();
             int val = g.get(p.x, p.y, p.z);
@@ -32,27 +35,19 @@ public final class FloodFillQueue implements FloodFill {
             visit.accept(p.x, p.y, p.z, val);
             count++;
 
-            // 6-neighborhood
-            push(g, seen, q, p.x+1, p.y, p.z);
-            push(g, seen, q, p.x-1, p.y, p.z);
-            push(g, seen, q, p.x, p.y+1, p.z);
-            push(g, seen, q, p.x, p.y-1, p.z);
-            push(g, seen, q, p.x, p.y, p.z+1);
-            push(g, seen, q, p.x, p.y, p.z-1);
+            for (int[] o : N6) {
+                int nx = p.x + o[0], ny = p.y + o[1], nz = p.z + o[2];
+                if (!g.inside(nx,ny,nz)) continue;
+                int i = idx(w,wh,nx,ny,nz);
+                if (seen[i]) continue;
+                seen[i] = true;
+                q.add(new P(nx,ny,nz));
+            }
         }
         return count;
     }
 
-    private static void push(ReadableGrid3i g, boolean[] seen, ArrayDeque<P> q, int x,int y,int z){
-        if (!g.inside(x,y,z)) return;
-        int idx = index(g,x,y,z);
-        if (!seen[idx]) {
-            seen[idx] = true;
-            q.add(new P(x,y,z));
-        }
-    }
-
-    private static int index(ReadableGrid3i g, int x,int y,int z){
-        return (z * g.height() + y) * g.width() + x;
+    private static int idx(int w, int wh, int x, int y, int z) {
+        return z * wh + y * w + x;
     }
 }

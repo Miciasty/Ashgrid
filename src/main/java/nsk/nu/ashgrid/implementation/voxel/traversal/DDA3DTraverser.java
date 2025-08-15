@@ -5,20 +5,14 @@ import nsk.nu.ashcore.api.math.Vector3;
 import nsk.nu.ashgrid.api.voxel.traversal.CellVisitor;
 import nsk.nu.ashgrid.api.voxel.traversal.VoxelTraverser;
 
-/**
- * 3D DDA (Amanatides & Woo) voxel traversal.
- * Assumes an axis-aligned unit grid where voxel (i,j,k) covers [i,i+1)×[j,j+1)×[k,k+1).
- */
+/** 3D DDA (Amanatides & Woo) voxel traversal. */
 public final class DDA3DTraverser implements VoxelTraverser {
-
-    @Override
-    public String id() {
-        return "dda";
-    }
+    @Override public String id() { return "dda"; }
 
     @Override
     public void traverse(Ray ray, double tMax, CellVisitor visitor) {
         if (tMax < 0) throw new IllegalArgumentException("tMax must be >= 0");
+
         final Vector3 o = ray.origin();
         final Vector3 d = ray.direction();
 
@@ -30,48 +24,50 @@ public final class DDA3DTraverser implements VoxelTraverser {
         final int stepY = d.y() > 0 ? 1 : -1;
         final int stepZ = d.z() > 0 ? 1 : -1;
 
-        final double invAbsDx = d.x() != 0 ? 1.0 / Math.abs(d.x()) : Double.POSITIVE_INFINITY;
-        final double invAbsDy = d.y() != 0 ? 1.0 / Math.abs(d.y()) : Double.POSITIVE_INFINITY;
-        final double invAbsDz = d.z() != 0 ? 1.0 / Math.abs(d.z()) : Double.POSITIVE_INFINITY;
+        final double ax = Math.abs(d.x());
+        final double ay = Math.abs(d.y());
+        final double az = Math.abs(d.z());
 
-        final double nextBoundaryX = d.x() >= 0 ? (Math.floor(o.x()) + 1.0 - o.x()) : (o.x() - Math.floor(o.x()));
-        final double nextBoundaryY = d.y() >= 0 ? (Math.floor(o.y()) + 1.0 - o.y()) : (o.y() - Math.floor(o.y()));
-        final double nextBoundaryZ = d.z() >= 0 ? (Math.floor(o.z()) + 1.0 - o.z()) : (o.z() - Math.floor(o.z()));
+        final double invAx = ax != 0 ? 1.0 / ax : Double.POSITIVE_INFINITY;
+        final double invAy = ay != 0 ? 1.0 / ay : Double.POSITIVE_INFINITY;
+        final double invAz = az != 0 ? 1.0 / az : Double.POSITIVE_INFINITY;
 
-        double tMaxX = d.x() != 0 ? nextBoundaryX * invAbsDx : Double.POSITIVE_INFINITY;
-        double tMaxY = d.y() != 0 ? nextBoundaryY * invAbsDy : Double.POSITIVE_INFINITY;
-        double tMaxZ = d.z() != 0 ? nextBoundaryZ * invAbsDz : Double.POSITIVE_INFINITY;
+        final double nx = (x + (stepX > 0 ? 1 : 0)) - o.x();
+        final double ny = (y + (stepY > 0 ? 1 : 0)) - o.y();
+        final double nz = (z + (stepZ > 0 ? 1 : 0)) - o.z();
 
-        final double tDeltaX = invAbsDx;
-        final double tDeltaY = invAbsDy;
-        final double tDeltaZ = invAbsDz;
+        double tMaxX = ax != 0 ? nx * invAx : Double.POSITIVE_INFINITY;
+        double tMaxY = ay != 0 ? ny * invAy : Double.POSITIVE_INFINITY;
+        double tMaxZ = az != 0 ? nz * invAz : Double.POSITIVE_INFINITY;
+
+        final double tDeltaX = invAx;
+        final double tDeltaY = invAy;
+        final double tDeltaZ = invAz;
 
         double t = 0.0;
 
         while (t < tMax) {
-            final double tNext = Math.min(tMaxX, Math.min(tMaxY, tMaxZ));
+            final double tNext = min3(tMaxX, tMaxY, tMaxZ);
             final double tEnter = t;
-            final double tExit = Math.min(tNext, tMax);
-
-            if (!visitor.visit(x, y, z, tEnter, tExit)) {
-                return;
-            }
+            final double tExit  = Math.min(tNext, tMax);
+            if (!visitor.visit(x, y, z, tEnter, tExit)) return;
 
             t = tNext;
-            if (t >= tMax) {
-                return;
-            }
+            if (t >= tMax) return;
 
-            if (tNext == tMaxX) {
-                x += stepX;
-                tMaxX += tDeltaX;
-            } else if (tNext == tMaxY) {
-                y += stepY;
-                tMaxY += tDeltaY;
-            } else {
-                z += stepZ;
-                tMaxZ += tDeltaZ;
+            int axis = argmin3(tMaxX, tMaxY, tMaxZ);
+            switch (axis) {
+                case 0 -> { x += stepX; tMaxX += tDeltaX; }
+                case 1 -> { y += stepY; tMaxY += tDeltaY; }
+                default -> { z += stepZ; tMaxZ += tDeltaZ; }
             }
         }
+    }
+
+    private static double min3(double a, double b, double c) { return Math.min(a, Math.min(b, c)); }
+    private static int argmin3(double a, double b, double c) {
+        if (a <= b && a <= c) return 0;
+        if (b <= c) return 1;
+        return 2;
     }
 }

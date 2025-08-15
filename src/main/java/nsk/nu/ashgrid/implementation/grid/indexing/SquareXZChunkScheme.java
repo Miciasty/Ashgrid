@@ -1,7 +1,10 @@
-package nsk.nu.ashgrid.api.grid.indexing;
+package nsk.nu.ashgrid.implementation.grid.indexing;
 
 import nsk.nu.ashcore.api.geometry.AxisAlignedBox;
 import nsk.nu.ashcore.api.math.Vector3;
+import nsk.nu.ashgrid.api.grid.indexing.CellIndex3;
+import nsk.nu.ashgrid.api.grid.indexing.ChunkIndex2;
+import nsk.nu.ashgrid.api.grid.indexing.ChunkScheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,9 +13,13 @@ import java.util.List;
 public final class SquareXZChunkScheme implements ChunkScheme {
     private final int size;
 
-    /**
-     * @param size chunk size along X and Z in cells (must be > 0)
-     */
+    private static final int[][] N4 = { {1,0},{-1,0},{0,1},{0,-1} };
+    private static final int[][] N8 = {
+            {-1,-1},{0,-1},{1,-1},
+            {-1, 0},       {1, 0},
+            {-1, 1},{0, 1},{1, 1}
+    };
+
     public SquareXZChunkScheme(int size) {
         if (size <= 0) throw new IllegalArgumentException("size > 0 required");
         this.size = size;
@@ -22,9 +29,8 @@ public final class SquareXZChunkScheme implements ChunkScheme {
 
     @Override
     public ChunkIndex2 chunkOfPoint(Vector3 w) {
-        int cx = (int)Math.floor(w.x() / size);
-        int cz = (int)Math.floor(w.z() / size);
-        return new ChunkIndex2(cx, cz);
+        return new ChunkIndex2((int)Math.floor(w.x() / size),
+                (int)Math.floor(w.z() / size));
     }
 
     @Override
@@ -38,28 +44,19 @@ public final class SquareXZChunkScheme implements ChunkScheme {
     public AxisAlignedBox chunkBounds(ChunkIndex2 c) {
         double x0 = (double)c.cx() * size;
         double z0 = (double)c.cz() * size;
-        double x1 = x0 + size;
-        double z1 = z0 + size;
-        return new AxisAlignedBox(x0, Double.NEGATIVE_INFINITY, z0,
-                x1, Double.POSITIVE_INFINITY, z1);
+        return new AxisAlignedBox(
+                new Vector3(x0, Double.NEGATIVE_INFINITY, z0),
+                new Vector3(x0 + size, Double.POSITIVE_INFINITY, z0 + size)
+        );
     }
 
-    @Override
-    public Iterable<ChunkIndex2> neighbors4(ChunkIndex2 c) {
-        List<ChunkIndex2> out = new ArrayList<>(4);
-        out.add(new ChunkIndex2(c.cx()+1, c.cz()));
-        out.add(new ChunkIndex2(c.cx()-1, c.cz()));
-        out.add(new ChunkIndex2(c.cx(), c.cz()+1));
-        out.add(new ChunkIndex2(c.cx(), c.cz()-1));
-        return out;
-    }
+    @Override public Iterable<ChunkIndex2> neighbors4(ChunkIndex2 c) { return neighbors(c, N4); }
+    @Override public Iterable<ChunkIndex2> neighbors8(ChunkIndex2 c) { return neighbors(c, N8); }
 
-    @Override
-    public Iterable<ChunkIndex2> neighbors8(ChunkIndex2 c) {
-        List<ChunkIndex2> out = new ArrayList<>(8);
-        for (int dz=-1; dz<=1; dz++)
-            for (int dx=-1; dx<=1; dx++)
-                if (dx!=0 || dz!=0) out.add(new ChunkIndex2(c.cx()+dx, c.cz()+dz));
+    private static Iterable<ChunkIndex2> neighbors(ChunkIndex2 c, int[][] offs) {
+        List<ChunkIndex2> out = new ArrayList<>(offs.length);
+        int cx = c.cx(), cz = c.cz();
+        for (int[] o : offs) out.add(new ChunkIndex2(cx + o[0], cz + o[1]));
         return out;
     }
 }

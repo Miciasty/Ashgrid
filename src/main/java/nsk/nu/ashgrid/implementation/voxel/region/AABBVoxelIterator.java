@@ -1,6 +1,7 @@
-package nsk.nu.ashgrid.api.voxel.region;
+package nsk.nu.ashgrid.implementation.voxel.region;
 
 import nsk.nu.ashcore.api.geometry.AxisAlignedBox;
+import nsk.nu.ashgrid.api.voxel.region.RegionIterator;
 
 /** Simple nested-loop iterator over voxels intersecting an AABB. */
 public final class AABBVoxelIterator implements RegionIterator {

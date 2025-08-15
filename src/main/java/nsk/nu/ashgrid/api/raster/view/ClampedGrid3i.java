@@ -13,7 +13,7 @@ public final class ClampedGrid3i implements Grid3i {
 
     @Override public int get(int x,int y,int z){ int[] c = clamp(x,y,z); return src.get(c[0], c[1], c[2]); }
     @Override public void set(int x,int y,int z,int v){ int[] c = clamp(x,y,z); src.set(c[0], c[1], c[2], v); }
-    @Override public boolean inside(int x,int y,int z){ return true; } // always "inside" due to clamping
+    @Override public boolean inside(int x,int y,int z){ return true; }
     @Override public int width(){ return src.width(); } @Override public int height(){ return src.height(); } @Override public int depth(){ return src.depth(); }
 
     private int[] clamp(int x,int y,int z){
