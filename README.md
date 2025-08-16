@@ -3,9 +3,9 @@
 3D voxel/grid toolkit for world partitioning, raster operations, and fast ray/line traversal. Batteries included, boilerplate excluded.
 
 > [!NOTE]
-> **Ashgrid** focuses on grid/voxel primitives and algorithms.  
-> World transforms and frames: see **Ashspace**.  
-> Pathfinding, graphs, heuristics: see **Ashnav**.
+> **Ashgrid** focuses on grid/voxel primitives and algorithms. 
+>- World transforms and frames: see **Ashspace**.  
+>- Pathfinding, graphs, heuristics: see **Ashnav**.
 
 ---
 
