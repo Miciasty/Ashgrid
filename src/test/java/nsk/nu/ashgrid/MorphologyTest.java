@@ -37,21 +37,29 @@ class MorphologyTest {
         assertEquals(1, dst.get(1,1,0));
     }
 
-    @Test void opening_erodes_then_dilates_and_removes_single_pixel_noise() {
+    @Test void opening_removes_noise_and_preserves_3d_cross() {
         // GIVEN
         Morphology morph = GridServices.require(Morphology.class, "MorphologyBasic");
-        ArrayGrid3i src = new ArrayGrid3i(3,3,1);
-        src.set(0,0,0, 1); // isolated noise
-        src.set(1,1,0, 1); // main
-        Grid3i tmp = new ArrayGrid3i(3,3,1);
-        Grid3i dst = new ArrayGrid3i(3,3,1);
-        IntPredicate fg = v -> v == 1;
+        ArrayGrid3i src = new ArrayGrid3i(3,3,3);
+        src.set(0,0,0, 1);
+        int cx=1, cy=1, cz=1;
+        src.set(cx,cy,cz,1);
+        src.set(cx+1,cy,cz,1); src.set(cx-1,cy,cz,1);
+        src.set(cx,cy+1,cz,1); src.set(cx,cy-1,cz,1);
+        src.set(cx,cy,cz+1,1); src.set(cx,cy,cz-1,1);
+
+        Grid3i tmp = new ArrayGrid3i(3,3,3);
+        Grid3i dst = new ArrayGrid3i(3,3,3);
 
         // WHEN
-        MorphologyOps.open(morph, src, fg, tmp, dst, Morphology.Neighborhood.N6);
+        MorphologyOps.open(morph, src, v -> v==1, tmp, dst, Morphology.Neighborhood.N6);
 
         // THEN
-        assertEquals(1, dst.get(1,1,0));
         assertEquals(0, dst.get(0,0,0));
+        assertEquals(1, dst.get(1,1,1));
+
+        int ones=0;
+        for(int z=0;z<3;z++) for(int y=0;y<3;y++) for(int x=0;x<3;x++) if(dst.get(x,y,z)==1) ones++;
+        assertEquals(7, ones);
     }
 }
