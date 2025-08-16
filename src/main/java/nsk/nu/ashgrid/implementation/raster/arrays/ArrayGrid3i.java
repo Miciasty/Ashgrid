@@ -1,34 +1,25 @@
 package nsk.nu.ashgrid.implementation.raster.arrays;
 
-/**
- * Dense 3D float grid backed by a 1D array in Z-major order (z,y,x).
- * Coordinates: x in [0,width), y in [0,height), z in [0,depth).
- */
-public final class ArrayGrid3i {
-    private final int width, height, depth;
-    private final float[] data;
+import nsk.nu.ashgrid.api.raster.Grid3i;
+
+/** Dense 3D int grid backed by a 1D array in Z-major order (z,y,x). */
+public final class ArrayGrid3i implements Grid3i {
+    private final int w,h,d;
+    private final int[] data;
 
     public ArrayGrid3i(int width, int height, int depth) {
-        if (width <= 0 || height <= 0 || depth <= 0)
-            throw new IllegalArgumentException("All dimensions must be > 0");
-        this.width = width; this.height = height; this.depth = depth;
-        this.data = new float[width * height * depth];
+        if (width<=0||height<=0||depth<=0) throw new IllegalArgumentException("dims > 0");
+        this.w=width; this.h=height; this.d=depth;
+        this.data = new int[w*h*d];
     }
 
-    public float get(int x, int y, int z) {
-        check(x,y,z); return data[index(x,y,z)];
-    }
+    @Override public int get(int x,int y,int z){ check(x,y,z); return data[idx(x,y,z)]; }
+    @Override public void set(int x,int y,int z,int v){ check(x,y,z); data[idx(x,y,z)] = v; }
+    @Override public boolean inside(int x,int y,int z){ return x>=0&&x<w&&y>=0&&y<h&&z>=0&&z<d; }
+    @Override public int width(){ return w; }
+    @Override public int height(){ return h; }
+    @Override public int depth(){ return d; }
 
-    public void set(int x, int y, int z, float v) {
-        check(x,y,z); data[index(x,y,z)] = v;
-    }
-
-    public int width()  { return width;  }
-    public int height() { return height; }
-    public int depth()  { return depth;  }
-
-    private void check(int x,int y,int z){
-        if (x<0||x>=width||y<0||y>=height||z<0||z>=depth) throw new IndexOutOfBoundsException();
-    }
-    private int index(int x,int y,int z){ return (z * height + y) * width + x; }
+    private void check(int x,int y,int z){ if(!inside(x,y,z)) throw new IndexOutOfBoundsException(); }
+    private int idx(int x,int y,int z){ return (z*h + y)*w + x; }
 }
