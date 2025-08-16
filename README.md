@@ -252,4 +252,4 @@ for (var c : scheme.chunksInAABB(box)) {
 
 ## License
 
-Apache-2.0 (or project’s chosen license). Include a `LICENSE` file at repository root.
+Apache-2.0 Copyright 2025 Mateusz Aftanas
