@@ -2,7 +2,6 @@ package nsk.nu.ashgrid.api.voxel.ops.morphology;
 
 import nsk.nu.ashgrid.api.raster.Grid3i;
 import nsk.nu.ashgrid.api.raster.ReadableGrid3i;
-import nsk.nu.ashgrid.api.raster.WritableGrid3i;
 
 import java.util.function.IntPredicate;
 
@@ -19,6 +18,8 @@ public final class MorphologyOps {
                             Grid3i tmp,
                             Grid3i dst,
                             Morphology.Neighborhood nh) {
+        requireSameShape(src, tmp, "tmp");
+        requireSameShape(src, dst, "dst");
         m.erode(src, fg, tmp, nh);
         m.dilate(tmp, fg, dst, nh);
     }
@@ -30,11 +31,13 @@ public final class MorphologyOps {
                              Grid3i tmp,
                              Grid3i dst,
                              Morphology.Neighborhood nh) {
+        requireSameShape(src, tmp, "tmp");
+        requireSameShape(src, dst, "dst");
         m.dilate(src, fg, tmp, nh);
         m.erode(tmp, fg, dst, nh);
     }
 
-    /** n× dilation with two buffers; result guaranteed in dst. */
+    /** N-step dilation with two buffers; result guaranteed in dst. */
     public static void dilateN(Morphology m,
                                ReadableGrid3i src,
                                IntPredicate fg,
@@ -42,7 +45,10 @@ public final class MorphologyOps {
                                Grid3i dst,
                                Morphology.Neighborhood nh,
                                int n) {
-        if (n <= 0) { copy(src, dst); return; }
+        if (n < 0) throw new IllegalArgumentException("n must be >= 0");
+        requireSameShape(src, tmp, "tmp");
+        requireSameShape(src, dst, "dst");
+        if (n == 0) { copy(src, dst); return; }
         m.dilate(src, fg, dst, nh);
         if (n == 1) return;
 
@@ -55,7 +61,7 @@ public final class MorphologyOps {
         if (a != dst) copy(a, dst);
     }
 
-    /** n× erosion with two buffers; result guaranteed in dst. */
+    /** N-step erosion with two buffers; result guaranteed in dst. */
     public static void erodeN(Morphology m,
                               ReadableGrid3i src,
                               IntPredicate fg,
@@ -63,7 +69,10 @@ public final class MorphologyOps {
                               Grid3i dst,
                               Morphology.Neighborhood nh,
                               int n) {
-        if (n <= 0) { copy(src, dst); return; }
+        if (n < 0) throw new IllegalArgumentException("n must be >= 0");
+        requireSameShape(src, tmp, "tmp");
+        requireSameShape(src, dst, "dst");
+        if (n == 0) { copy(src, dst); return; }
         m.erode(src, fg, dst, nh);
         if (n == 1) return;
 
@@ -81,5 +90,11 @@ public final class MorphologyOps {
             for (int y = 0; y < a.height(); y++)
                 for (int x = 0; x < a.width(); x++)
                     b.set(x, y, z, a.get(x, y, z));
+    }
+
+    private static void requireSameShape(ReadableGrid3i src, ReadableGrid3i other, String otherName) {
+        if (src.width() != other.width() || src.height() != other.height() || src.depth() != other.depth()) {
+            throw new IllegalArgumentException(otherName + " dimensions must match src");
+        }
     }
 }

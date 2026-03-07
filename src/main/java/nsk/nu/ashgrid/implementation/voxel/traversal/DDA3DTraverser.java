@@ -5,7 +5,7 @@ import nsk.nu.ashcore.api.math.Vector3;
 import nsk.nu.ashgrid.api.voxel.traversal.CellVisitor;
 import nsk.nu.ashgrid.api.voxel.traversal.VoxelTraverser;
 
-/** 3D DDA (Amanatides & Woo) voxel traversal. */
+/** 3D DDA (Amanatides and Woo) voxel traversal. */
 public final class DDA3DTraverser implements VoxelTraverser {
     @Override public String id() { return "dda"; }
 

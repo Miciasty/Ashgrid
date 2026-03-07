@@ -27,7 +27,12 @@ public final class LineOfSight {
         if (len == 0) return true;
         Ray ray = new Ray(a, dir.mul(1.0 / len));
         final boolean[] blocked = {false};
+        final boolean[] firstCell = {true};
         traverser.traverse(ray, Math.nextDown(len), (x,y,z,t0,t1) -> {
+            if (firstCell[0]) {
+                firstCell[0] = false;
+                return true;
+            }
             if (occ.blocks(x,y,z)) { blocked[0] = true; return false; }
             return true;
         });

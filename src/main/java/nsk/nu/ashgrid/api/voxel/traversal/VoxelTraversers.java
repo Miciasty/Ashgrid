@@ -15,6 +15,7 @@ public final class VoxelTraversers {
         return new VoxelTraverser() {
             @Override public String id() { return delegate.id() + "-clipped"; }
             @Override public void traverse(Ray ray, double tMax, CellVisitor visitor) {
+                if (tMax < 0) throw new IllegalArgumentException("tMax must be >= 0");
                 double[] te = intersectRayAABB(ray, clip);
                 if (te == null) return;
                 double tEnter = Math.max(0.0, te[0]);
@@ -22,7 +23,8 @@ public final class VoxelTraversers {
                 if (tExit <= tEnter) return;
 
                 Vector3 o = ray.origin().add(ray.direction().mul(tEnter));
-                delegate.traverse(new Ray(o, ray.direction()), tExit - tEnter, visitor);
+                delegate.traverse(new Ray(o, ray.direction()), tExit - tEnter, (x, y, z, localT0, localT1) ->
+                        visitor.visit(x, y, z, localT0 + tEnter, localT1 + tEnter));
             }
         };
     }

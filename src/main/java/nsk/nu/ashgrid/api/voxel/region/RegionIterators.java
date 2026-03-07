@@ -34,7 +34,7 @@ public final class RegionIterators {
                 }
     }
 
-    /** Iterate cells inside a vertical cylinder aligned with Z axis in XZ plane. */
+    /** Iterate cells inside a vertical cylinder aligned with Y axis in XZ plane. */
     public static void forEachCellCylinderXZ(Vector3 center, double radius, int y0, int y1, CellConsumer c) {
         int cx = (int)Math.floor(center.x());
         int cz = (int)Math.floor(center.z());

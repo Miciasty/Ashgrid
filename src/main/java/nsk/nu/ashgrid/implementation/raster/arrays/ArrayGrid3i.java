@@ -1,9 +1,9 @@
 package nsk.nu.ashgrid.implementation.raster.arrays;
 
-import nsk.nu.ashgrid.api.raster.Grid3i;
+import nsk.nu.ashgrid.api.raster.BoundedGrid3i;
 
 /** Dense 3D int grid backed by a 1D array in Z-major order (z,y,x). */
-public final class ArrayGrid3i implements Grid3i {
+public final class ArrayGrid3i implements BoundedGrid3i {
     private final int w,h,d;
     private final int[] data;
 

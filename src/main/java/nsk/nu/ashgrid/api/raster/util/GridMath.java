@@ -1,5 +1,6 @@
 package nsk.nu.ashgrid.api.raster.util;
 
+import nsk.nu.ashcore.api.collision.Hit;
 import nsk.nu.ashcore.api.math.Vector3;
 
 /** Utility conversions and indexing helpers for grids. */

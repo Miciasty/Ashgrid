@@ -1,61 +1,107 @@
 package nsk.nu.ashgrid.implementation.raster.chunked;
 
-import nsk.nu.ashgrid.api.raster.Grid3i;
+import nsk.nu.ashcore.api.math.DivMod;
+import nsk.nu.ashgrid.api.raster.SparseGrid3i;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Sparse chunked integer grid: lazily allocates fixed-size chunks on write.
- * Infinite logical space; {@code inside} uses allocated chunks only.
+ * Unbounded sparse grid backed by lazily allocated fixed-size chunks.
+ * Cells from non-materialized chunks return {@code defaultValue}.
  */
-public final class ChunkedGrid3i implements Grid3i {
-    private final int cw,ch,cd; // chunk dimensions
-    private final Map<Long, ArrayGrid3i> chunks = new HashMap<>();
+public final class ChunkedGrid3i implements SparseGrid3i {
+    private final int cw;
+    private final int ch;
+    private final int cd;
+    private final int defaultValue;
+    private final Map<ChunkKey3, ArrayGrid3i> chunks = new HashMap<>();
 
     public ChunkedGrid3i(int chunkW, int chunkH, int chunkD) {
-        if (chunkW<=0||chunkH<=0||chunkD<=0) throw new IllegalArgumentException();
-        this.cw=chunkW; this.ch=chunkH; this.cd=chunkD;
+        this(chunkW, chunkH, chunkD, 0);
     }
 
-    @Override public int get(int x,int y,int z) {
-        ArrayGrid3i c = chunks.get(key(cx(x), cy(y), cz(z)));
-        if (c == null) throw new IndexOutOfBoundsException("no chunk allocated at cell");
-        int[] l = local(x,y,z);
-        return (int) c.get(l[0], l[1], l[2]);
+    public ChunkedGrid3i(int chunkW, int chunkH, int chunkD, int defaultValue) {
+        if (chunkW <= 0 || chunkH <= 0 || chunkD <= 0) {
+            throw new IllegalArgumentException("chunk dimensions must be > 0");
+        }
+        this.cw = chunkW;
+        this.ch = chunkH;
+        this.cd = chunkD;
+        this.defaultValue = defaultValue;
     }
 
-    @Override public void set(int x,int y,int z,int v) {
-        long k = key(cx(x), cy(y), cz(z));
-        ArrayGrid3i c = chunks.computeIfAbsent(k, kk -> new ArrayGrid3i(cw,ch,cd));
-        int[] l = local(x,y,z);
-        c.set(l[0], l[1], l[2], v);
+    @Override
+    public int get(int x, int y, int z) {
+        ArrayGrid3i chunk = chunks.get(chunkOfCell(x, y, z));
+        if (chunk == null) return defaultValue;
+        int[] l = local(x, y, z);
+        return chunk.get(l[0], l[1], l[2]);
     }
 
-    @Override public boolean inside(int x,int y,int z) {
-        return chunks.containsKey(key(cx(x), cy(y), cz(z)));
+    @Override
+    public void set(int x, int y, int z, int value) {
+        ChunkKey3 key = chunkOfCell(x, y, z);
+        if (value == defaultValue && !chunks.containsKey(key)) return;
+
+        ArrayGrid3i chunk = chunks.computeIfAbsent(key, ignored -> newChunk());
+        int[] l = local(x, y, z);
+        chunk.set(l[0], l[1], l[2], value);
     }
 
-    // Logical size is not defined for infinite space; return chunk size for convenience
-    @Override public int width()  { return cw; }
-    @Override public int height() { return ch; }
-    @Override public int depth()  { return cd; }
-
-    private int cx(int x){ return floorDiv(x, cw); }
-    private int cy(int y){ return floorDiv(y, ch); }
-    private int cz(int z){ return floorDiv(z, cd); }
-
-    private int[] local(int x,int y,int z){
-        int lx = floorMod(x, cw);
-        int ly = floorMod(y, ch);
-        int lz = floorMod(z, cd);
-        return new int[]{lx,ly,lz};
+    @Override
+    public boolean has(int x, int y, int z) {
+        return chunks.containsKey(chunkOfCell(x, y, z));
     }
 
-    private static int floorDiv(int a,int m){ int q = a / m; int r = a % m; return r<0 ? q-1 : q; }
-    private static int floorMod(int a,int m){ int r = a % m; return r<0 ? r+m : r; }
-    private static long key(int cx,int cy,int cz){
-        return (((long)cx & 0x1FFFFFL) << 42) | (((long)cy & 0x3FFFFL) << 22) | ((long)cz & 0x3FFFFFL);
+    @Override
+    public int defaultValue() {
+        return defaultValue;
+    }
+
+    /** @return chunk width in cells */
+    public int chunkWidth() { return cw; }
+
+    /** @return chunk height in cells */
+    public int chunkHeight() { return ch; }
+
+    /** @return chunk depth in cells */
+    public int chunkDepth() { return cd; }
+
+    /**
+     * @deprecated Use {@link #has(int, int, int)}. This method checks whether the backing chunk is materialized.
+     */
+    @Deprecated(forRemoval = false)
+    public boolean inside(int x, int y, int z) { return has(x, y, z); }
+
+    private ChunkKey3 chunkOfCell(int x, int y, int z) {
+        return new ChunkKey3(
+                DivMod.floorDiv(x, cw),
+                DivMod.floorDiv(y, ch),
+                DivMod.floorDiv(z, cd)
+        );
+    }
+
+    private int[] local(int x, int y, int z) {
+        return new int[]{
+                DivMod.floorMod(x, cw),
+                DivMod.floorMod(y, ch),
+                DivMod.floorMod(z, cd)
+        };
+    }
+
+    private ArrayGrid3i newChunk() {
+        ArrayGrid3i chunk = new ArrayGrid3i(cw, ch, cd);
+        if (defaultValue == 0) return chunk;
+
+        for (int z = 0; z < cd; z++) {
+            for (int y = 0; y < ch; y++) {
+                for (int x = 0; x < cw; x++) {
+                    chunk.set(x, y, z, defaultValue);
+                }
+            }
+        }
+        return chunk;
     }
 }

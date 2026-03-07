@@ -1,7 +1,7 @@
 package nsk.nu.ashgrid.api.raster;
 
 /**
- * Read-only integer 3D grid interface.
+ * Read-only finite integer 3D grid interface.
  */
 public interface ReadableGrid3i {
 

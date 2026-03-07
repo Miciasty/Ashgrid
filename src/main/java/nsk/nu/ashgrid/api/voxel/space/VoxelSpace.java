@@ -12,6 +12,7 @@ public final class VoxelSpace {
 
     public VoxelSpace(double scale, Vector3 origin) {
         if (scale <= 0) throw new IllegalArgumentException("scale must be > 0");
+        if (origin == null) throw new IllegalArgumentException("origin must not be null");
         this.scale = scale; this.origin = origin;
     }
 

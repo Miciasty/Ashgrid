@@ -1,6 +1,6 @@
 package nsk.nu.ashgrid.api.grid.bounds;
 
-/** Integer rectangle in XZ for chunk ranges, half-open: [cx0,cx1)×[cz0,cz1). */
+/** Integer rectangle in XZ for chunk ranges, half-open: [cx0,cx1) x [cz0,cz1). */
 public record IntRect2(int cx0, int cz0, int cx1, int cz1) {
     public IntRect2 {
         if (cx1 < cx0 || cz1 < cz0) throw new IllegalArgumentException("max < min");

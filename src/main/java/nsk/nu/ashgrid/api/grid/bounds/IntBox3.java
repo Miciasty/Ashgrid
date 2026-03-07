@@ -2,7 +2,7 @@ package nsk.nu.ashgrid.api.grid.bounds;
 
 /**
  * Integer axis-aligned box in cell coordinates.
- * Half-open by default: [minX, maxX) × [minY, maxY) × [minZ, maxZ)
+ * Half-open by default: [minX, maxX) x [minY, maxY) x [minZ, maxZ)
  * so width = maxX - minX etc. Use of() helpers for inclusive ranges.
  */
 public record IntBox3(int minX, int minY, int minZ,

@@ -13,15 +13,22 @@ public final class GridSets {
     private GridSets() {}
 
     public static void union(ReadableGrid3i a, ReadableGrid3i b, IntPredicate fg, WritableGrid3i out) {
+        requireSameShape(a, b, "b");
+        requireOutputShape(a, out);
         scan2(a, b, (va, vb) -> fg.test(va) || fg.test(vb), out);
     }
     public static void intersect(ReadableGrid3i a, ReadableGrid3i b, IntPredicate fg, WritableGrid3i out) {
+        requireSameShape(a, b, "b");
+        requireOutputShape(a, out);
         scan2(a, b, (va, vb) -> fg.test(va) && fg.test(vb), out);
     }
     public static void subtract(ReadableGrid3i a, ReadableGrid3i b, IntPredicate fg, WritableGrid3i out) {
+        requireSameShape(a, b, "b");
+        requireOutputShape(a, out);
         scan2(a, b, (va, vb) -> fg.test(va) && !fg.test(vb), out);
     }
     public static void invert(ReadableGrid3i a, IntPredicate fg, WritableGrid3i out) {
+        requireOutputShape(a, out);
         scan1(a, v -> !fg.test(v), out);
     }
 
@@ -41,5 +48,17 @@ public final class GridSets {
             for (int y=0; y<h; y++)
                 for (int x=0; x<w; x++)
                     out.set(x,y,z, fn.apply(a.get(x,y,z)) ? 1 : 0);
+    }
+
+    private static void requireSameShape(ReadableGrid3i a, ReadableGrid3i b, String bName) {
+        if (a.width() != b.width() || a.height() != b.height() || a.depth() != b.depth()) {
+            throw new IllegalArgumentException(bName + " dimensions must match a");
+        }
+    }
+
+    private static void requireOutputShape(ReadableGrid3i a, WritableGrid3i out) {
+        if (out instanceof ReadableGrid3i readableOut) {
+            requireSameShape(a, readableOut, "out");
+        }
     }
 }

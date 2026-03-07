@@ -1,0 +1,97 @@
+name: Publish Artifacts
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate publish secrets
+        run: |
+          required_vars=(MAVEN_CENTRAL_USERNAME MAVEN_CENTRAL_PASSWORD MAVEN_GPG_PASSPHRASE)
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              echo "::error::Missing required secret: ${var}"
+              exit 1
+            fi
+          done
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify release tag matches pom version
+        if: github.event_name == 'release'
+        run: |
+          pom_version=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)
+          tag="${GITHUB_REF_NAME}"
+          if [ "$tag" != "$pom_version" ] && [ "$tag" != "v$pom_version" ]; then
+            echo "::error::Release tag '$tag' does not match pom version '$pom_version'."
+            echo "::error::Use '$pom_version' or 'v$pom_version'."
+            exit 1
+          fi
+
+      - name: Configure Maven servers
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${GITHUB_ACTOR}</username>
+                <password>${GITHUB_TOKEN}</password>
+              </server>
+              <server>
+                <id>central</id>
+                <username>${MAVEN_CENTRAL_USERNAME}</username>
+                <password>${MAVEN_CENTRAL_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+      - name: Build, sign, and publish
+        run: mvn --batch-mode -Pcentral deploy --file pom.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+      - name: Upload release assets
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/*.jar
+            target/*.jar.asc
+            target/*.pom
+            target/*.pom.asc
+          fail_on_unmatched_files: false

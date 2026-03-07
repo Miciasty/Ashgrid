@@ -9,7 +9,7 @@ import nsk.nu.ashgrid.api.grid.indexing.ChunkScheme;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Square chunks in XZ plane of fixed size (cells), Y is unbounded. */
+/** Square chunks in the XZ plane with unit Y span in {@link #chunkBounds(ChunkIndex2)}. */
 public final class SquareXZChunkScheme implements ChunkScheme {
     private final int size;
 
@@ -45,8 +45,8 @@ public final class SquareXZChunkScheme implements ChunkScheme {
         double x0 = (double)c.cx() * size;
         double z0 = (double)c.cz() * size;
         return new AxisAlignedBox(
-                new Vector3(x0, Double.NEGATIVE_INFINITY, z0),
-                new Vector3(x0 + size, Double.POSITIVE_INFINITY, z0 + size)
+                new Vector3(x0, 0.0, z0),
+                new Vector3(x0 + size, 1.0, z0 + size)
         );
     }
 
