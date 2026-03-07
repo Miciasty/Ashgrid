@@ -2,7 +2,7 @@ package nsk.nu.ashgrid;
 
 import nsk.nu.ashcore.api.geometry.Ray;
 import nsk.nu.ashcore.api.math.Vector3;
-import nsk.nu.ashgrid.api.util.GridServices;
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.voxel.traversal.VoxelTraverser;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ class DdaTraverserTest {
     @Test
     void ray_visits_target_cell_and_is_monotonic_on_axes() {
         // GIVEN
-        VoxelTraverser dda = GridServices.require(VoxelTraverser.class, "dda");
+        VoxelTraverser dda = ServiceRegistry.of(VoxelTraverser.class).require("dda");
         Ray ray = new Ray(new Vector3(0.2, 0.2, 0.2), new Vector3(1, 1, 0));
         final int targetX = 3, targetY = 3, targetZ = 0;
         final int[] prev = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};

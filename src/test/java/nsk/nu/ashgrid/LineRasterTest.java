@@ -1,6 +1,6 @@
 package nsk.nu.ashgrid;
 
-import nsk.nu.ashgrid.api.util.GridServices;
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.voxel.draw.Line3D;
 import nsk.nu.ashgrid.api.voxel.draw.Line3DSupercover;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ class LineRasterTest {
     @Test
     void bresenham_straight_along_x_visits_4_cells() {
         // GIVEN
-        Line3D line = GridServices.require(Line3D.class, "bresenham3d");
+        Line3D line = ServiceRegistry.of(Line3D.class).require("bresenham3d");
         final int[] count = {0};
 
         // WHEN
@@ -32,8 +32,8 @@ class LineRasterTest {
 
     @Test void supercover_hits_more_than_bresenham_on_diagonal() {
         // GIVEN
-        Line3D b = GridServices.require(Line3D.class, "bresenham3d");
-        Line3DSupercover s = GridServices.require(Line3DSupercover.class, "supercover3d");
+        Line3D b = ServiceRegistry.of(Line3D.class).require("bresenham3d");
+        Line3DSupercover s = ServiceRegistry.of(Line3DSupercover.class).require("supercover3d");
         final int[] nb = {0}, ns = {0};
 
         // WHEN

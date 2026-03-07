@@ -57,7 +57,7 @@ It’s intentionally low-level and fast, so you can compose your own higher-leve
 ## Features
 
 - **Indexing & Chunks**
-    - `ChunkScheme` (e.g. `SquareXZChunkScheme`) maps world→chunk/cell; neighbors4/8; chunksInAABB; cellsInAABB.
+    - `ChunkScheme` (e.g. `SquareXZChunkScheme`) maps world→chunk/cell and exposes neighbors4/8.
 - **Traversal**
     - `VoxelTraverser` DDA (Amanatides & Woo) + `VoxelTraversers.clipped(aabb)` helper.
 - **Lines**
@@ -74,13 +74,13 @@ It’s intentionally low-level and fast, so you can compose your own higher-leve
     - `DistanceTransform` (chamfer 3–4–5).
     - Set algebra on masks: `GridSets.union/intersect/subtract/invert`.
 - **Storage**
-    - Dense: `ArrayGrid3i`, `ArrayGrid3f`; boolean: `BitGrid3`.
+    - Dense: `ArrayGrid3i`; boolean: `BitGrid3`.
     - Chunked sparse: `ChunkedGrid3i`; map-based sparse: `HashSparseGrid3i`.
     - Views: `SubGrid3i`, `ClampedGrid3i`, `MaskedGrid3i`, `ConstGrid3i`; 2D slices via `SliceView2D`.
 - **Utilities**
     - `VoxelSpace` (scale/origin, world↔cell).
     - `GridMath` (indexing helpers).
-    - `GridServices` (SPI discovery by `id()`).
+    - Ashcore `ServiceRegistry` (SPI discovery by `id()`).
 
 > [!CAUTION]
 > Grids are **not** thread-safe. Partition work by chunks if you go parallel.
@@ -117,12 +117,12 @@ implementation("nsk.nu:Ashgrid:1.1")
 ```java
 import nsk.nu.ashcore.api.geometry.Ray;
 import nsk.nu.ashcore.api.math.Vector3;
-import nsk.nu.ashgrid.api.util.GridServices;
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.voxel.traversal.VoxelTraverser;
 import nsk.nu.ashgrid.api.voxel.query.Raycast;
 
 // GIVEN: a density mask and a voxel traverser
-var traverser = GridServices.require(VoxelTraverser.class, "dda");
+var traverser = ServiceRegistry.of(VoxelTraverser.class).require("dda");
 var raycast = new Raycast(traverser);
 
 // WHEN: cast a ray up to tMax
@@ -140,10 +140,11 @@ if (hit != null) {
 ```java
 import nsk.nu.ashgrid.api.voxel.ops.morphology.*;
 import nsk.nu.ashgrid.api.voxel.ops.components.*;
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
 
-var morph = GridServices.require(Morphology.class, "MorphologyBasic");
-var cc    = GridServices.require(ConnectedComponents.class, "ConnectedComponentsBFS");
+var morph = ServiceRegistry.of(Morphology.class).require("MorphologyBasic");
+var cc    = ServiceRegistry.of(ConnectedComponents.class).require("ConnectedComponentsBFS");
 
 var src = new ArrayGrid3i(64, 32, 64);
 var tmp = new ArrayGrid3i(64, 32, 64);
@@ -172,9 +173,8 @@ for (var c : scheme.neighbors4(chunk)) {
 }
 
 var box = new AxisAlignedBox(new Vector3(0,0,0), new Vector3(40,10,40));
-for (var c : scheme.chunksInAABB(box)) {
-    // load/generate chunk c
-}
+var cell = scheme.cellOfPoint(new Vector3(40,10,40));
+System.out.println("Cell at box max: " + cell);
 ```
 
 ---
@@ -201,9 +201,9 @@ for (var c : scheme.chunksInAABB(box)) {
 - `Morphology`, `MorphologyOps`
 - `FloodFill`, `ConnectedComponents`
 - `DistanceTransform` (Chamfer 3–4–5)
-- `ArrayGrid3i/3f`, `BitGrid3`, `ChunkedGrid3i`, `HashSparseGrid3i`
+- `ArrayGrid3i`, `BitGrid3`, `ChunkedGrid3i`, `HashSparseGrid3i`
 - Views: `SubGrid3i`, `ClampedGrid3i`, `MaskedGrid3i`, `ConstGrid3i`, `SliceView2D`
-- Utilities: `VoxelSpace`, `GridMath`, `GridSets`, `GridServices`, `VoxelTraversers`
+- Utilities: `VoxelSpace`, `GridMath`, `GridSets`, `VoxelTraversers` + Ashcore `ServiceRegistry`
 
 ---
 
@@ -222,7 +222,7 @@ for (var c : scheme.chunksInAABB(box)) {
 - ✅ Morphology, flood fill, connected components
 - ✅ Chamfer distance transform
 - ✅ Dense/bit/chunked/sparse storage and views
-- ✅ SPI loading via `META-INF/services` and `GridServices`
+- ✅ SPI loading via `META-INF/services` and Ashcore `ServiceRegistry`
 
 > [!IMPORTANT]
 > Verify your JAR contains the `META-INF/services/*` entries. A quick check:
@@ -253,3 +253,7 @@ for (var c : scheme.chunksInAABB(box)) {
 ## License
 
 Apache-2.0 Copyright 2025 Mateusz Aftanas
+
+
+
+

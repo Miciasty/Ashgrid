@@ -14,11 +14,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/Miciasty/Ashcore</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>nsk.nu</groupId>
-            <artifactId>Ashcore</artifactId>
-            <version>1.0</version>
+            <artifactId>ashcore</artifactId>
+            <version>1.0.1</version>
         </dependency>
 
         <dependency>

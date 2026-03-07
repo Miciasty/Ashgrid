@@ -1,7 +1,7 @@
 package nsk.nu.ashgrid;
 
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.raster.Grid3i;
-import nsk.nu.ashgrid.api.util.GridServices;
 import nsk.nu.ashgrid.api.voxel.ops.components.ConnectedComponents;
 import nsk.nu.ashgrid.api.voxel.ops.floodfill.FloodFill;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
@@ -24,7 +24,7 @@ class FloodFillAndComponentsTest {
         // GIVEN
         ArrayGrid3i g = new ArrayGrid3i(3,1,1);
         g.set(1,0,0, 1);
-        FloodFill fill = GridServices.require(FloodFill.class, "floodfill-queue");
+        FloodFill fill = ServiceRegistry.of(FloodFill.class).require("floodfill-queue");
         IntPredicate isOne = v -> v == 1;
         final int[] cnt = {0};
 
@@ -42,7 +42,7 @@ class FloodFillAndComponentsTest {
         src.set(0,0,0, 1);
         src.set(2,0,0, 1);
         Grid3i labels = new ArrayGrid3i(3,1,1);
-        ConnectedComponents cc = GridServices.require(ConnectedComponents.class, "ConnectedComponentsBFS");
+        ConnectedComponents cc = ServiceRegistry.of(ConnectedComponents.class).require("ConnectedComponentsBFS");
         IntPredicate fg = v -> v == 1;
 
         // WHEN

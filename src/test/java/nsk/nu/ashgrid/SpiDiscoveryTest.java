@@ -1,6 +1,6 @@
 package nsk.nu.ashgrid;
 
-import nsk.nu.ashgrid.api.util.GridServices;
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.voxel.draw.Line3D;
 import nsk.nu.ashgrid.api.voxel.draw.Line3DSupercover;
 import nsk.nu.ashgrid.api.voxel.ops.components.ConnectedComponents;
@@ -16,12 +16,12 @@ class SpiDiscoveryTest {
         // GIVEN
         // WHEN
         // THEN
-        assertFalse(GridServices.byId(VoxelTraverser.class).isEmpty());
-        assertFalse(GridServices.byId(Line3D.class).isEmpty());
-        assertFalse(GridServices.byId(Line3DSupercover.class).isEmpty());
-        assertFalse(GridServices.byId(FloodFill.class).isEmpty());
-        assertFalse(GridServices.byId(ConnectedComponents.class).isEmpty());
-        assertFalse(GridServices.byId(Morphology.class).isEmpty());
-        assertFalse(GridServices.byId(DistanceTransform.class).isEmpty());
+        assertFalse(ServiceRegistry.of(VoxelTraverser.class).isEmpty());
+        assertFalse(ServiceRegistry.of(Line3D.class).isEmpty());
+        assertFalse(ServiceRegistry.of(Line3DSupercover.class).isEmpty());
+        assertFalse(ServiceRegistry.of(FloodFill.class).isEmpty());
+        assertFalse(ServiceRegistry.of(ConnectedComponents.class).isEmpty());
+        assertFalse(ServiceRegistry.of(Morphology.class).isEmpty());
+        assertFalse(ServiceRegistry.of(DistanceTransform.class).isEmpty());
     }
 }

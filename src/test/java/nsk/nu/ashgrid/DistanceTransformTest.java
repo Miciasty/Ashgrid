@@ -1,6 +1,6 @@
 package nsk.nu.ashgrid;
 
-import nsk.nu.ashgrid.api.util.GridServices;
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.voxel.ops.distance.DistanceTransform;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ class DistanceTransformTest {
     @Test
     void chamfer345_face_neighbor_distance_is_3() {
         // GIVEN
-        DistanceTransform dt = GridServices.require(DistanceTransform.class, "Chamfer345Distance");
+        DistanceTransform dt = ServiceRegistry.of(DistanceTransform.class).require("Chamfer345Distance");
         int w=3,h=3,d=1;
         DistanceTransform.Mask mask = (x,y,z) -> x==1 && y==1 && z==0;
         float[] out = new float[w*h*d];

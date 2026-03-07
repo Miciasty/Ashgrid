@@ -1,7 +1,7 @@
 package nsk.nu.ashgrid;
 
+import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.raster.Grid3i;
-import nsk.nu.ashgrid.api.util.GridServices;
 import nsk.nu.ashgrid.api.voxel.ops.morphology.Morphology;
 import nsk.nu.ashgrid.api.voxel.ops.morphology.MorphologyOps;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
@@ -21,7 +21,7 @@ class MorphologyTest {
     @Test
     void dilate_n6_creates_cross_of_five() {
         // GIVEN
-        Morphology morph = GridServices.require(Morphology.class, "MorphologyBasic");
+        Morphology morph = ServiceRegistry.of(Morphology.class).require("MorphologyBasic");
         ArrayGrid3i src = new ArrayGrid3i(3,3,1);
         src.set(1,1,0, 1);
         Grid3i dst = new ArrayGrid3i(3,3,1);
@@ -39,7 +39,7 @@ class MorphologyTest {
 
     @Test void opening_removes_noise_and_preserves_3d_cross() {
         // GIVEN
-        Morphology morph = GridServices.require(Morphology.class, "MorphologyBasic");
+        Morphology morph = ServiceRegistry.of(Morphology.class).require("MorphologyBasic");
         ArrayGrid3i src = new ArrayGrid3i(3,3,3);
         src.set(0,0,0, 1);
         int cx=1, cy=1, cz=1;
