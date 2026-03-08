@@ -7,7 +7,7 @@ Low-level deterministic Java library for 3D voxel/grid indexing, traversal, rast
 > - World transforms and coordinate frames: Ashspace
 > - Pathfinding and navigation graphs: Ashnav
 
-## 1. One-sentence purpose
+## 1. Purpose
 
 Ashgrid gives you reusable building blocks to store, traverse, and process 3D integer voxel worlds.
 
