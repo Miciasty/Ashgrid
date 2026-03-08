@@ -11,7 +11,7 @@ Low-level deterministic Java library for 3D voxel/grid indexing, traversal, rast
 
 Ashgrid gives you reusable building blocks to store, traverse, and process 3D integer voxel worlds.
 
-## 2. Problem it solves
+## 2. Problem
 
 Voxel plugins and engines often re-implement the same low-level logic:
 - world position to cell/chunk conversion,
@@ -21,7 +21,7 @@ Voxel plugins and engines often re-implement the same low-level logic:
 
 Ashgrid centralizes these primitives with deterministic contracts so you can build higher-level systems without rewriting them.
 
-## 3. When to use / when not to use
+## 3. When to use
 
 Use Ashgrid when:
 - you need deterministic voxel queries on a 3D integer grid,
@@ -33,7 +33,7 @@ Do not use Ashgrid when:
 - you need full coordinate-space graph/scene abstractions,
 - you need high-level pathfinding/gameplay logic.
 
-## 4. Simple real-world example (Minecraft plugin example)
+## 4. Simple example (Minecraft plugin example)
 
 You want to detect which solid block a player is targeting:
 1. Build a ray from player eye position and look direction.
@@ -54,7 +54,7 @@ You can then run region tools on affected blocks with the same grid primitives:
 4. Raster algorithms iterate cells using neighborhood definitions (`N6`, `N18`, `N26`).
 5. Views (subgrid/clamped/masked/slice) let you reuse algorithms on limited regions.
 
-## 6. Big-O for key operations
+## 6. Big-O for operations
 
 Definitions:
 - `k`: number of visited cells along a ray/line.
@@ -77,7 +77,7 @@ Definitions:
 | `DistanceTransform` (chamfer) | `O(n)` | Linear passes over full volume. |
 | `GridSets.union/intersect/subtract/invert` | `O(n)` | Element-wise full-volume set ops. |
 
-## 7. Glossary of core terms
+## 7. Core terms
 
 - `voxel`: one cell in a 3D integer grid.
 - `cell`: integer coordinate `(x, y, z)` in voxel space.
@@ -87,7 +87,7 @@ Definitions:
 - `tEnter/tExit`: ray parameter interval where the ray is inside a visited cell.
 - `N6/N18/N26`: neighborhood connectivity sets for voxel adjacency.
 
-## 8. Minimal quick-start code
+## 8. Quick-start
 
 Maven:
 
