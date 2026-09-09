@@ -51,7 +51,8 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 ## GRID-001 — Skorygować parametry przejścia DDA dla ujemnego kierunku
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** INSPEKCJA  
 **Kontrakt:** sekcje 3.2, 4.2, 4.3, 4.5
@@ -66,17 +67,20 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Przy powyższych danych dodatnie odcinki wizyty to komórka (0,0,0) z [0,0.2) i (-1,0,0) z [0.2,1), z uzasadnioną tolerancją porównań liczbowych.
-- [ ] Testy obejmują sześć kierunków osiowych, kierunki mieszane, start ujemny i natychmiastowe przerwanie callbacku.
-- [ ] Każdy przedział spełnia uzgodnione zasady i rosnący parametr; Raycast/LineOfSight oraz [TRACE-002](../Ashtrace/ISSUES.md#trace-002) sprawdzono z poprawioną zależnością.
+- [x] Przy powyższych danych dodatnie odcinki wizyty to komórka (0,0,0) z [0,0.2) i (-1,0,0) z [0.2,1), z uzasadnioną tolerancją porównań liczbowych.
+- [x] Testy obejmują sześć kierunków osiowych, kierunki mieszane, start ujemny i natychmiastowe przerwanie callbacku.
+- [x] Każdy przedział spełnia uzgodnione zasady i rosnący parametr; Raycast/LineOfSight oraz [TRACE-002](../Ashtrace/ISSUES.md#trace-002) sprawdzono z poprawioną zależnością.
 
 **Powiązania:** [CORE-001](../Ashcore/ISSUES.md#core-001) określa poprawny Ray. Powiadom Ashtrace w [TRACE-002](../Ashtrace/ISSUES.md#trace-002) o poprawce i wersji Ashgrid.
+
+**Wynik korekty 2026-09-09:** Odtworzono błąd testem i debuggerem: pierwszy callback [0,-0.2). Skorygowano znak czasu do granicy na każdej osi i odrzucono niepoprawne promienie/NaN; indeksy nie zawijają się. CorrectionRegressionTest i TraversalBoundaryTest obejmują sześć kierunków, mieszane znaki, granice, przerwanie, bardzo małe składowe oraz Raycast/LOS. Fixture src/it/ConsumerContracts.java potwierdza TRACE-002 z poprawionym JAR i Ashcore 1.1.0-SNAPSHOT. Wersje, SHA i wynik: docs/RELEASE.md.
 
 <a id="grid-002"></a>
 
 ## GRID-002 — Uzgodnić wizyty na granicach oraz jednostki mapowania
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** AUDYT  
 **Kontrakt:** sekcje 3.2, 3.3, 4.1, 4.3
@@ -91,17 +95,20 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Testy obejmują twarz, krawędź, narożnik, kierunek ujemny z granicy i dokładny koniec odcinka.
-- [ ] Udokumentowano dopuszczalność zerowych przedziałów, porządek remisów i warunki zakończenia nieograniczonego traversal.
-- [ ] Przy uzgodnionej skali i początku mapowanie ujemnych współrzędnych oraz granic zgadza się z testami [SPACE-001](../Ashspace/ISSUES.md#space-001); różnic nie maskuje uniwersalny epsilon.
+- [x] Testy obejmują twarz, krawędź, narożnik, kierunek ujemny z granicy i dokładny koniec odcinka.
+- [x] Udokumentowano dopuszczalność zerowych przedziałów, porządek remisów i warunki zakończenia nieograniczonego traversal.
+- [x] Przy uzgodnionej skali i początku mapowanie ujemnych współrzędnych oraz granic zgadza się z testami [SPACE-001](../Ashspace/ISSUES.md#space-001); różnic nie maskuje uniwersalny epsilon.
 
 **Powiązania:** Współdzielone ustalenia z [SPACE-001](../Ashspace/ISSUES.md#space-001) i [TRACE-002](../Ashtrace/ISSUES.md#trace-002); nie wprowadzaj zależności produkcyjnej Ashgrid od Ashspace.
+
+**Wynik korekty 2026-09-09:** Zachowano floor(origin), remisy X→Y→Z i zerowe przedziały, z jawnym opisem końca [0,tMax), zera, +INF, NaN i wyczerpania int. Clipped traversal ma półotwarte granice równoległe. Supercover opisano i naprawiono osobno; nie narzucono mu listy DDA. Testy SPACE-001 potwierdzają zgodność przy skalach 0.5/1/2, przesuniętym początku i granicach. Dzielenie w VoxelSpace oraz mnożenie przez odwrotność w Ashspace mogą zaokrąglać inaczej dla innych skal; to jawne ograniczenie i dalsza praca SPACE-001, bez epsilona zmieniającego przynależność.
 
 <a id="grid-003"></a>
 
 ## GRID-003 — Zweryfikować maskę i znaczenie odległości Chamfer345
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** INSPEKCJA  
 **Kontrakt:** sekcje 3.2, 4.2, 4.4, 4.5
@@ -116,17 +123,20 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Testy obejmują wszystkie orientacje przekątnych, odbicia/permutacje osi i porównanie z prostym wzorcem kosztów na małych siatkach.
-- [ ] Opis wyjaśnia foreground=0, jednostkę wagi, przybliżenie względem odległości geometrycznej i przypadek braku foreground.
-- [ ] Sprawdzono walidację wymiarów, produktu rozmiarów i bufora wyjściowego.
+- [x] Testy obejmują wszystkie orientacje przekątnych, odbicia/permutacje osi i porównanie z prostym wzorcem kosztów na małych siatkach.
+- [x] Opis wyjaśnia foreground=0, jednostkę wagi, przybliżenie względem odległości geometrycznej i przypadek braku foreground.
+- [x] Sprawdzono walidację wymiarów, produktu rozmiarów i bufora wyjściowego.
 
 **Powiązania:** Nie przedstawiaj wyniku jako gotowego testu przechodniości postaci w Ashnav; znaczenie odległości musi być jawne.
+
+**Wynik korekty 2026-09-09:** Reprodukcja dała 4 i 6 dla lustrzanych przekątnych. Pełna maska 13+13 sąsiadów przechodzi porównanie z Dijkstrą dla wszystkich źródeł w trzech niekubicznych siatkach i masek wieloźródłowych. Wagi 3/4/5 zachowano; brak foreground daje +INF zamiast nieudokumentowanego 1e9f. Udokumentowano jednostki, przybliżenie geometryczne i precyzję float. Wymiary i długość bufora są sprawdzane przed odczytem maski.
 
 <a id="grid-004"></a>
 
 ## GRID-004 — Sprawdzić zakres indeksów, rozmiary buforów i mutację danych
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** AUDYT  
 **Kontrakt:** sekcje 4.2, 4.3, 4.4, 4.5
@@ -141,17 +151,20 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Małe testy błędnych i skrajnych wymiarów potwierdzają przewidywalne odrzucenie bez dużych alokacji.
-- [ ] Widoki, sąsiedztwa i iteratory mają opis własności danych i zachowania po mutacji.
-- [ ] README rozróżnia koszt pełnej objętości, odwiedzonych komórek i danych rzadkich, uwzględniając pamięć.
+- [x] Małe testy błędnych i skrajnych wymiarów potwierdzają przewidywalne odrzucenie bez dużych alokacji.
+- [x] Widoki, sąsiedztwa i iteratory mają opis własności danych i zachowania po mutacji.
+- [x] README rozróżnia koszt pełnej objętości, odwiedzonych komórek i danych rzadkich, uwzględniając pamięć.
 
 **Powiązania:** [NAV-002](../Ashnav/ISSUES.md#nav-002) i [NAV-004](../Ashnav/ISSUES.md#nav-004) opierają się na tych kontraktach; nie dodawaj synchronizacji bez wymagania obsługi współbieżności.
+
+**Wynik korekty 2026-09-09:** Dodano wspólne sprawdzanie dodatniej objętości int przed alokacją/flatteningiem w dense/bit/chunk, flood fill, components, morphology i distance. Bounds/neighbors nie zawijają int, subgrid/slice sprawdzają położenie, inclusive region kończy się przy MAX_VALUE, puste ułamkowe AABB nie odwiedza komórek. Własność widoków i tablic, ograniczenia mutacji oraz koszty pamięci opisano w API/README. GridLimitsTest/OperationContractTest używają małych siatek i niealokujących atrap. Poprawiono też flood fill na clamped view i klasyfikację masek pośrednich morfologii.
 
 <a id="grid-005"></a>
 
 ## GRID-005 — Zweryfikować kontrakty i pakowanie providerów SPI
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** AUDYT  
 **Kontrakt:** sekcje 4.1, 4.2, 4.5, 6
@@ -166,17 +179,20 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Quick start działa ze spakowanym JAR i identyfikatorami opisanymi w README.
-- [ ] Testy obejmują rejestrację wszystkich reklamowanych providerów i te wspólne właściwości, które gwarantują ich interfejsy.
-- [ ] Kontrakt kolejności pochodzi z [CORE-003](../Ashcore/ISSUES.md#core-003) lub jest jawnie ograniczony do identyfikowanego algorytmu.
+- [x] Quick start działa ze spakowanym JAR i identyfikatorami opisanymi w README.
+- [x] Testy obejmują rejestrację wszystkich reklamowanych providerów i te wspólne właściwości, które gwarantują ich interfejsy.
+- [x] Kontrakt kolejności pochodzi z [CORE-003](../Ashcore/ISSUES.md#core-003) lub jest jawnie ograniczony do identyfikowanego algorytmu.
 
 **Powiązania:** [CORE-003](../Ashcore/ISSUES.md#core-003); konsumenci SPI obejmują Ashtrace.
+
+**Wynik korekty 2026-09-09:** PackagedArtifactIT sprawdza siedem zasobów/identyfikatorów, pochodzenie klas z głównego JAR, brakujący i zdublowany ID oraz kompilację/wykonanie README bez klas projektu na classpath. Zachowano nieokreśloną kolejność ServiceRegistry i jawny wybór ID zgodnie z CORE-003; providerzy mają własne reguły kolejności. Audyt wykazał niepełny supercover (10 zamiast 22 kontaktów narożnikowych); poprawiona implementacja przechodzi niezależny test 343 odcinków w obu kierunkach. RegionIterators/AABBVoxelIterator nie reklamują rejestracji SPI.
 
 <a id="grid-006"></a>
 
 ## GRID-006 — Utrzymać zgodność SquareXZChunkScheme i helperów
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** DECYZJA  
 **Kontrakt:** sekcje 3.2, 5, 5.1, 8
@@ -191,17 +207,20 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Oficjalne przykłady klientów nadal kompilują się albo istnieje świadoma, wersjonowana migracja.
-- [ ] README zawiera obietnicę stabilności używanych publicznie implementacji i konkretne ograniczenia.
-- [ ] Zmiany mapowania i walidacji oceniono pod względem zachowania, nie tylko sygnatur.
+- [x] Oficjalne przykłady klientów nadal kompilują się albo istnieje świadoma, wersjonowana migracja.
+- [x] README zawiera obietnicę stabilności używanych publicznie implementacji i konkretne ograniczenia.
+- [x] Zmiany mapowania i walidacji oceniono pod względem zachowania, nie tylko sygnatur.
 
 **Powiązania:** [SPACE-001](../Ashspace/ISSUES.md#space-001), [SPACE-005](../Ashspace/ISSUES.md#space-005) i [NAV-007](../Ashnav/ISSUES.md#nav-007); uzgodnienia API prowadzi Ashgrid.
+
+**Wynik korekty 2026-09-09:** SquareXZChunkScheme pozostaje wspieranym publicznym API w dotychczasowym pakiecie, podobnie VoxelSpace. Zapisano zgodność źródłową/binarną, zmiany zachowania i ograniczenia jednostek. javap porównał 70 klas: zero usuniętych sygnatur, dwie dodane metody GridMath. Przykłady Ashspace/Ashtrace kompilują się i działają; snippet Ashnav po dodaniu wyłącznie class/main również. Rozwojowa wersja 1.3.0-SNAPSHOT nie nadpisuje 1.2.0.
 
 <a id="grid-007"></a>
 
 ## GRID-007 — Dostosować CI, pakowanie i dowody wydania
 
-**Status:** OTWARTE  
+**Status:** GOTOWE
+
 **Priorytet:** P1  
 **Dowód:** INSPEKCJA  
 **Kontrakt:** sekcje 2, 4.5, 6
@@ -216,21 +235,27 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Warunki zamknięcia:**
 
-- [ ] Zapisano wynik mvn -B clean verify z wymaganymi testami oraz wersje JDK/Maven; CI obejmuje faktycznie utrzymywane gałęzie i PR-y.
-- [ ] Główny JAR, sources, Javadoc i wymagane zasoby są sprawdzone. Błędny Javadoc nie jest po cichu uznawany za poprawny; nie trzeba przy tym mechanicznie włączać każdej reguły stylistycznej doclint.
-- [ ] Wskazano używane cele publikacji, tag/wersję i dowody dostępności albo jawnie pozostawiono publikację jako niezweryfikowaną. Sam deploy nie służy jako test poprawek.
-- [ ] Sprawdzono efektywne zależności i ich scope; test integracyjny korzysta z zamierzonej wersji dolnej warstwy, a nie przypadkowej starej kopii z lokalnego Maven.
+- [x] Zapisano wynik mvn -B clean verify z wymaganymi testami oraz wersje JDK/Maven; CI obejmuje faktycznie utrzymywane gałęzie i PR-y.
+- [x] Główny JAR, sources, Javadoc i wymagane zasoby są sprawdzone. Błędny Javadoc nie jest po cichu uznawany za poprawny; nie trzeba przy tym mechanicznie włączać każdej reguły stylistycznej doclint.
+- [x] Wskazano używane cele publikacji, tag/wersję i dowody dostępności albo jawnie pozostawiono publikację jako niezweryfikowaną. Sam deploy nie służy jako test poprawek.
+- [x] Sprawdzono efektywne zależności i ich scope; test integracyjny korzysta z zamierzonej wersji dolnej warstwy, a nie przypadkowej starej kopii z lokalnego Maven.
 
 **Powiązania:** Wspólny wzorzec: [TEMPLATE-001](../Ashtemplate/ISSUES.md#template-001) i [TEMPLATE-002](../Ashtemplate/ISSUES.md#template-002). Tę korektę można wykonać niezależnie od napraw algorytmów. Istniejącego numeru wydania nie nadpisuj innym artefaktem.
 
+**Wynik korekty 2026-09-09:** Końcowe mvn -B clean verify oraz dependency:tree: 80 testów jednostkowych + 4 testy artefaktów PASS, JDK 25.0.2, Maven 3.9.16, compiler 3.13.0 release 21. Javadoc all,-missing/failOnError=true PASS. IntelliJ build PASS. CI obejmuje wszystkie branche i PR-y, Temurin 21/25, dokładne nazwy main/sources/Javadoc. Domyślny Ashcore 1.0.1 oraz osobny wariant 1.1.0-SNAPSHOT zostały zidentyfikowane i przetestowane; JUnit pozostaje test-only. Publikacja do Packages/Release/Central i zdalne CI są jawnie niezweryfikowane; nie uruchamiano deploy. Szczegóły w docs/RELEASE.md.
+
 ## Stan przekazania i dziennik sesji
 
-**Na 2026-09-09:** wszystkie zadania pozostają OTWARTE. Utworzono dokumentację; nie wprowadzono korekt kodu, nie wykonano buildów bibliotek ani publikacji. Nie uznawaj samego dodania ISSUES.md za realizację żadnego zadania.
+**Historyczny stan przed korektą 2026-09-09:** wszystkie zadania pozostawały OTWARTE. Utworzono dokumentację; nie wprowadzono korekt kodu, nie wykonano buildów bibliotek ani publikacji. Nie uznawaj samego dodania ISSUES.md za realizację żadnego zadania.
 
-**Sugerowany start:** [GRID-001](../Ashgrid/ISSUES.md#grid-001); następnie [GRID-002](../Ashgrid/ISSUES.md#grid-002) i [GRID-003](../Ashgrid/ISSUES.md#grid-003).
+**Aktualny stan:** GRID-001–GRID-007 GOTOWE w opisanym zakresie. Gałąź fix/ashgrid-issues-20260909, snapshot wejściowy d58bfba, wersja 1.3.0-SNAPSHOT. Lokalnie 80 + 4 testy Ashgrid oraz 103 testy konsumentów PASS; testy Ashgrid przechodzą z Ashcore 1.0.1 i 1.1.0-SNAPSHOT. Dowody i migracja: [docs/RELEASE.md](docs/RELEASE.md). To nie jest deklaracja pełnego audytu każdego publicznego API ani publikacji.
+
+**Następny krok:** przed wydaniem uruchomić zdalne CI Java 21/25, wybrać niewydany numer i docelową opublikowaną wersję Ashcore oraz potwierdzić destynacje. Kontynuować zakresy SPACE-001/SPACE-005, TRACE-002 i NAV-007 w ich repozytoriach; nie mylić lokalnych prób integracyjnych z aktualizacją ich POM.
 
 Po kolejnej sesji dopisz wiersz i uzupełnij statusy odpowiednich zadań. Zapisz także nieudane próby i ograniczenia środowiska; nie opisuj kontroli niewykonanej jako zaliczonej.
 
 | Data / commit | ID i decyzja | Zmiana | Polecenie / test i rzeczywisty wynik | Pozostałe zależności / następny krok |
 | --- | --- | --- | --- | --- |
 | 2026-09-09 / punkt odniesienia powyżej | Wszystkie: OTWARTE | Utworzenie planu korekt | Inspekcja statyczna; testów bibliotek nie uruchomiono | Rozpocząć od wskazanego P1 |
+
+| 2026-09-09 / commit dodający ten wpis; snapshot d58bfba | GRID-001–GRID-007: GOTOWE | Korekty algorytmów, zakresów, danych, kontraktów API/SPI, Javadoc, CI; wersja 1.3.0-SNAPSHOT | Dwie pierwsze regresje FAIL przed poprawką; supercover 10/22 FAIL. Końcowe clean verify 80 + 4 PASS, JDK 25.0.2/Maven 3.9.16/release 21. Ashspace 31, Ashtrace 43, Ashnav 29 PASS; przykłady i fixture SPACE-001/TRACE-002 PASS; javap bez usuniętych sygnatur | Publikacja i zdalne CI niewykonane; szersze kwestie mappera pozostają w SPACE-001. Dowody/SHA/polecenia: docs/RELEASE.md |

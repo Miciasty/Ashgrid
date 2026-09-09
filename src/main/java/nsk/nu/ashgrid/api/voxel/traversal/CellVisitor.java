@@ -3,6 +3,7 @@ package nsk.nu.ashgrid.api.voxel.traversal;
 /**
  * Callback invoked for each voxel visited by a voxel traversal algorithm.
  * Implementations should return {@code true} to continue traversal or {@code false} to stop early.
+ * A boundary visit may have tEnter == tExit; it does not imply positive travel through that cell.
  */
 @FunctionalInterface
 public interface CellVisitor {

@@ -6,7 +6,8 @@ import nsk.nu.ashgrid.api.raster.ReadableGrid3i;
 import java.util.function.IntPredicate;
 
 /**
- * Convenience composition helpers for morphology.
+ * Convenience composition helpers for morphology. fg classifies the original source only;
+ * intermediate 0/1 masks use nonzero foreground. Source, tmp and dst must not share storage.
  */
 public final class MorphologyOps {
     private MorphologyOps() {}
@@ -18,10 +19,10 @@ public final class MorphologyOps {
                             Grid3i tmp,
                             Grid3i dst,
                             Morphology.Neighborhood nh) {
-        requireSameShape(src, tmp, "tmp");
+        requireBuffers(src, tmp, dst);
         requireSameShape(src, dst, "dst");
         m.erode(src, fg, tmp, nh);
-        m.dilate(tmp, fg, dst, nh);
+        m.dilate(tmp, v -> v != 0, dst, nh);
     }
 
     /** Closing = dilate then erode. tmp must be a read/write buffer. */
@@ -31,10 +32,10 @@ public final class MorphologyOps {
                              Grid3i tmp,
                              Grid3i dst,
                              Morphology.Neighborhood nh) {
-        requireSameShape(src, tmp, "tmp");
+        requireBuffers(src, tmp, dst);
         requireSameShape(src, dst, "dst");
         m.dilate(src, fg, tmp, nh);
-        m.erode(tmp, fg, dst, nh);
+        m.erode(tmp, v -> v != 0, dst, nh);
     }
 
     /** N-step dilation with two buffers; result guaranteed in dst. */
@@ -46,7 +47,7 @@ public final class MorphologyOps {
                                Morphology.Neighborhood nh,
                                int n) {
         if (n < 0) throw new IllegalArgumentException("n must be >= 0");
-        requireSameShape(src, tmp, "tmp");
+        requireBuffers(src, tmp, dst);
         requireSameShape(src, dst, "dst");
         if (n == 0) { copy(src, dst); return; }
         m.dilate(src, fg, dst, nh);
@@ -55,7 +56,7 @@ public final class MorphologyOps {
         Grid3i a = dst;
         Grid3i b = tmp;
         for (int i = 1; i < n; i++) {
-            m.dilate(a, fg, b, nh);
+            m.dilate(a, v -> v != 0, b, nh);
             Grid3i t = a; a = b; b = t;
         }
         if (a != dst) copy(a, dst);
@@ -70,7 +71,7 @@ public final class MorphologyOps {
                               Morphology.Neighborhood nh,
                               int n) {
         if (n < 0) throw new IllegalArgumentException("n must be >= 0");
-        requireSameShape(src, tmp, "tmp");
+        requireBuffers(src, tmp, dst);
         requireSameShape(src, dst, "dst");
         if (n == 0) { copy(src, dst); return; }
         m.erode(src, fg, dst, nh);
@@ -79,10 +80,15 @@ public final class MorphologyOps {
         Grid3i a = dst;
         Grid3i b = tmp;
         for (int i = 1; i < n; i++) {
-            m.erode(a, fg, b, nh);
+            m.erode(a, v -> v != 0, b, nh);
             Grid3i t = a; a = b; b = t;
         }
         if (a != dst) copy(a, dst);
+    }
+
+    private static void requireBuffers(ReadableGrid3i src, Grid3i tmp, Grid3i dst) {
+        if (src == tmp || src == dst || tmp == dst) throw new IllegalArgumentException("buffers must not alias");
+        requireSameShape(src, tmp, "tmp");
     }
 
     private static void copy(ReadableGrid3i a, Grid3i b) {

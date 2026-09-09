@@ -3,7 +3,8 @@ package nsk.nu.ashgrid.api.grid.bounds;
 /**
  * Integer axis-aligned box in cell coordinates.
  * Half-open by default: [minX, maxX) x [minY, maxY) x [minZ, maxZ)
- * so width = maxX - minX etc. Use of() helpers for inclusive ranges.
+ * so width = maxX - minX etc. Use inclusive() for inclusive ranges.
+ * Size/arithmetic helpers throw ArithmeticException when their int result would overflow.
  */
 public record IntBox3(int minX, int minY, int minZ,
                       int maxX, int maxY, int maxZ) {
@@ -13,10 +14,10 @@ public record IntBox3(int minX, int minY, int minZ,
             throw new IllegalArgumentException("max < min");
     }
 
-    public int width()  { return maxX - minX; }
-    public int height() { return maxY - minY; }
-    public int depth()  { return maxZ - minZ; }
-    public boolean empty() { return width() <= 0 || height() <= 0 || depth() <= 0; }
+    public int width()  { return Math.subtractExact(maxX, minX); }
+    public int height() { return Math.subtractExact(maxY, minY); }
+    public int depth()  { return Math.subtractExact(maxZ, minZ); }
+    public boolean empty() { return maxX == minX || maxY == minY || maxZ == minZ; }
 
     public boolean contains(int x,int y,int z) {
         return x >= minX && x < maxX &&
@@ -25,11 +26,13 @@ public record IntBox3(int minX, int minY, int minZ,
     }
 
     public IntBox3 expand(int dx,int dy,int dz) {
-        return new IntBox3(minX - dx, minY - dy, minZ - dz, maxX + dx, maxY + dy, maxZ + dz);
+        return new IntBox3(Math.subtractExact(minX, dx), Math.subtractExact(minY, dy), Math.subtractExact(minZ, dz),
+                Math.addExact(maxX, dx), Math.addExact(maxY, dy), Math.addExact(maxZ, dz));
     }
 
     public IntBox3 translate(int dx,int dy,int dz) {
-        return new IntBox3(minX + dx, minY + dy, minZ + dz, maxX + dx, maxY + dy, maxZ + dz);
+        return new IntBox3(Math.addExact(minX, dx), Math.addExact(minY, dy), Math.addExact(minZ, dz),
+                Math.addExact(maxX, dx), Math.addExact(maxY, dy), Math.addExact(maxZ, dz));
     }
 
     public IntBox3 intersect(IntBox3 o) {
@@ -41,6 +44,6 @@ public record IntBox3(int minX, int minY, int minZ,
 
     /** Inclusive constructor helper: [x0..x1], etc. */
     public static IntBox3 inclusive(int x0,int y0,int z0, int x1,int y1,int z1) {
-        return new IntBox3(x0, y0, z0, x1+1, y1+1, z1+1);
+        return new IntBox3(x0, y0, z0, Math.addExact(x1, 1), Math.addExact(y1, 1), Math.addExact(z1, 1));
     }
 }

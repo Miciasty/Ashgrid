@@ -1,6 +1,7 @@
 package nsk.nu.ashgrid.implementation.voxel.ops.components;
 
 import nsk.nu.ashgrid.api.raster.Grid3i;
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 import nsk.nu.ashgrid.api.voxel.neighborhood.Neighborhood3D;
 import nsk.nu.ashgrid.api.voxel.ops.components.ConnectedComponents;
 
@@ -16,7 +17,10 @@ public final class ConnectedComponentsBFS implements ConnectedComponents {
     @Override
     public int label(Grid3i src, IntPredicate isForeground, Grid3i labelsOut, Neighborhood nh) {
         final int w = src.width(), h = src.height(), d = src.depth();
-        final int wh = w*h, total = wh*d;
+        final int total = GridMath.cellCount(w,h,d), wh = w*h;
+        if (src == labelsOut) throw new IllegalArgumentException("labels must not alias source");
+        if (labelsOut.width()!=w || labelsOut.height()!=h || labelsOut.depth()!=d)
+            throw new IllegalArgumentException("labels dimensions must match source");
         final int[][] offs = switch (nh) {
             case N6  -> Neighborhood3D.N6;
             case N18 -> Neighborhood3D.N18;

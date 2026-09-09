@@ -10,8 +10,10 @@ public interface RegionIterator {
     interface CellConsumer { void accept(int x, int y, int z); }
 
     /**
-     * Iterate all cells whose unit voxels intersect the AABB
-     * (i.e. floor(min) .. floor(max)-1 in each dimension).
+     * Iterate all cells whose unit voxels intersect the finite half-open AABB.
+     * Bounds are floor(min) through floor(nextDown(max)), inclusive; empty boxes emit nothing.
+     * Cell indices must fit int. AABBVoxelIterator scans Z,Y,X with X fastest.
+     * Iteration is synchronous and owns no grid state or snapshot.
      */
     void forEachCell(AxisAlignedBox box, CellConsumer consumer);
 }

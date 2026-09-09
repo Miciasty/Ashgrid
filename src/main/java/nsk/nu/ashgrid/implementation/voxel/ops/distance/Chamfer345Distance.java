@@ -1,18 +1,24 @@
 package nsk.nu.ashgrid.implementation.voxel.ops.distance;
 
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 import nsk.nu.ashgrid.api.voxel.ops.distance.DistanceTransform;
 
 /**
  * 3-4-5 chamfer distance transform (forward/backward passes).
- * Foreground voxels get distance 0; background receive positive distances.
+ * Foreground voxels get distance 0; background receive minimum 26-neighbor path costs.
+ * Face/edge/corner steps cost 3/4/5, without normalization. Divide by 3 for an approximation
+ * in cell units, not Euclidean distance or a character-clearance guarantee.
+ * No foreground yields positive infinity. Large path costs are rounded to float precision.
  */
 public final class Chamfer345Distance implements DistanceTransform {
     @Override public String id() { return "Chamfer345Distance"; }
 
     @Override
     public void compute(int w,int h,int d, Mask src, float[] out) {
-        final int wh = w*h; final float INF=1e9f;
-        if (out.length != w*h*d) throw new IllegalArgumentException("out size mismatch");
+        final int total = GridMath.cellCount(w,h,d);
+        final int wh = w*h; final float INF=Float.POSITIVE_INFINITY;
+        if (out.length != total) throw new IllegalArgumentException("out size mismatch");
+        if (src == null) throw new NullPointerException("src");
 
         for (int z=0,i=0; z<d; z++)
             for (int y=0; y<h; y++)
@@ -20,8 +26,8 @@ public final class Chamfer345Distance implements DistanceTransform {
                     out[i] = src.isForeground(x,y,z) ? 0f : INF;
 
         final int[][] Nf={{-1,0,0},{0,-1,0},{0,0,-1}};
-        final int[][] Ne={{-1,-1,0},{-1,0,-1},{0,-1,-1}};
-        final int[][] Nc={{-1,-1,-1}};
+        final int[][] Ne={{-1,-1,0},{1,-1,0},{-1,0,-1},{1,0,-1},{0,-1,-1},{0,1,-1}};
+        final int[][] Nc={{-1,-1,-1},{1,-1,-1},{-1,1,-1},{1,1,-1}};
         final float wf=3f,we=4f,wc=5f;
 
         for (int z=0; z<d; z++)
@@ -31,8 +37,8 @@ public final class Chamfer345Distance implements DistanceTransform {
                 }
 
         final int[][] NfB={{1,0,0},{0,1,0},{0,0,1}};
-        final int[][] NeB={{1,1,0},{1,0,1},{0,1,1}};
-        final int[][] NcB={{1,1,1}};
+        final int[][] NeB={{1,1,0},{-1,1,0},{1,0,1},{-1,0,1},{0,1,1},{0,-1,1}};
+        final int[][] NcB={{1,1,1},{-1,1,1},{1,-1,1},{-1,-1,1}};
         for (int z=d-1; z>=0; z--)
             for (int y=h-1; y>=0; y--)
                 for (int x=w-1; x>=0; x--) {
@@ -50,7 +56,7 @@ public final class Chamfer345Distance implements DistanceTransform {
     }
 
     private static float n(float[] out,int w,int h,int d,int wh,int x,int y,int z,float wgt){
-        if (x<0||x>=w||y<0||y>=h||z<0||z>=d) return 1e9f;
+        if (x<0||x>=w||y<0||y>=h||z<0||z>=d) return Float.POSITIVE_INFINITY;
         return out[z*wh + y*w + x] + wgt;
     }
 }

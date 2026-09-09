@@ -2,6 +2,7 @@ package nsk.nu.ashgrid.implementation.raster.chunked;
 
 import nsk.nu.ashcore.api.math.DivMod;
 import nsk.nu.ashgrid.api.raster.SparseGrid3i;
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
 
 import java.util.HashMap;
@@ -23,9 +24,7 @@ public final class ChunkedGrid3i implements SparseGrid3i {
     }
 
     public ChunkedGrid3i(int chunkW, int chunkH, int chunkD, int defaultValue) {
-        if (chunkW <= 0 || chunkH <= 0 || chunkD <= 0) {
-            throw new IllegalArgumentException("chunk dimensions must be > 0");
-        }
+        GridMath.cellCount(chunkW, chunkH, chunkD);
         this.cw = chunkW;
         this.ch = chunkH;
         this.cd = chunkD;

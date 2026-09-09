@@ -19,7 +19,11 @@ public final class Raycast {
 
     public Raycast(VoxelTraverser traverser) { this.traverser = traverser; }
 
-    /** Returns first hit along the ray up to tMax, or {@code null} if none. */
+    /**
+     * Returns the first occupied callback cell on [0,tMax), or null if none.
+     * Includes the starting cell and zero-length visits; ties follow the selected traverser.
+     * Occupancy and its grid must remain stable for repeatable results.
+     */
     public Hit first(Ray ray, double tMax, Occupancy occ) {
         final Hit[] out = new Hit[1];
         traverser.traverse(ray, tMax, (x,y,z,t0,t1) -> {

@@ -8,6 +8,7 @@ import java.util.function.IntPredicate;
 /**
  * Write-through view that only writes foreground cells where {@code maskIsForeground} is true.
  * Reads pass through to the source grid.
+ * Source and mask are retained as live references; mutations affect later accesses.
  */
 public final class MaskedGrid3i implements Grid3i {
     private final Grid3i src;

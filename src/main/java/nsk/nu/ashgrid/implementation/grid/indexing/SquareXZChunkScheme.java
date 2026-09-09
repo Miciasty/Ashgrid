@@ -5,11 +5,17 @@ import nsk.nu.ashcore.api.math.Vector3;
 import nsk.nu.ashgrid.api.grid.indexing.CellIndex3;
 import nsk.nu.ashgrid.api.grid.indexing.ChunkIndex2;
 import nsk.nu.ashgrid.api.grid.indexing.ChunkScheme;
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** Square chunks in the XZ plane with unit Y span in {@link #chunkBounds(ChunkIndex2)}. */
+/**
+ * Supported public square chunk scheme in unit-grid coordinates, retained at this package path.
+ * chunkBounds has only the Y span [0,1), not an infinite vertical column.
+ * N4 order is +X,-X,+Z,-Z; N8 scans Z then X, omitting the center.
+ * Neighbor lists are fresh values; overflowing neighbor indices throw ArithmeticException.
+ */
 public final class SquareXZChunkScheme implements ChunkScheme {
     private final int size;
 
@@ -29,15 +35,13 @@ public final class SquareXZChunkScheme implements ChunkScheme {
 
     @Override
     public ChunkIndex2 chunkOfPoint(Vector3 w) {
-        return new ChunkIndex2((int)Math.floor(w.x() / size),
-                (int)Math.floor(w.z() / size));
+        return new ChunkIndex2(GridMath.floorToInt(Math.floor(w.x()) / size),
+                GridMath.floorToInt(Math.floor(w.z()) / size));
     }
 
     @Override
     public CellIndex3 cellOfPoint(Vector3 w) {
-        return new CellIndex3((int)Math.floor(w.x()),
-                (int)Math.floor(w.y()),
-                (int)Math.floor(w.z()));
+        return new CellIndex3(GridMath.cellX(w), GridMath.cellY(w), GridMath.cellZ(w));
     }
 
     @Override
@@ -56,7 +60,7 @@ public final class SquareXZChunkScheme implements ChunkScheme {
     private static Iterable<ChunkIndex2> neighbors(ChunkIndex2 c, int[][] offs) {
         List<ChunkIndex2> out = new ArrayList<>(offs.length);
         int cx = c.cx(), cz = c.cz();
-        for (int[] o : offs) out.add(new ChunkIndex2(cx + o[0], cz + o[1]));
+        for (int[] o : offs) out.add(new ChunkIndex2(Math.addExact(cx, o[0]), Math.addExact(cz, o[1])));
         return out;
     }
 }

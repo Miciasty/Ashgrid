@@ -1,6 +1,7 @@
 package nsk.nu.ashgrid.implementation.voxel.ops.floodfill;
 
 import nsk.nu.ashgrid.api.raster.ReadableGrid3i;
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 import nsk.nu.ashgrid.api.voxel.ops.floodfill.FloodFill;
 
 import java.util.ArrayDeque;
@@ -16,11 +17,11 @@ public final class FloodFillQueue implements FloodFill {
     @Override
     public int fill(ReadableGrid3i g, int sx, int sy, int sz,
                     IntPredicate canVisit, CellConsumer visit) {
-        if (!g.inside(sx,sy,sz)) return 0;
-
         final int w = g.width(), h = g.height(), d = g.depth();
+        final int total = GridMath.cellCount(w,h,d);
+        if (sx<0||sx>=w||sy<0||sy>=h||sz<0||sz>=d || !g.inside(sx,sy,sz)) return 0;
         final int wh = w * h;
-        final boolean[] seen = new boolean[w * h * d];
+        final boolean[] seen = new boolean[total];
 
         final ArrayDeque<P> q = new ArrayDeque<>();
         seen[idx(w,wh,sx,sy,sz)] = true;
@@ -37,7 +38,7 @@ public final class FloodFillQueue implements FloodFill {
 
             for (int[] o : N6) {
                 int nx = p.x + o[0], ny = p.y + o[1], nz = p.z + o[2];
-                if (!g.inside(nx,ny,nz)) continue;
+                if (nx<0||nx>=w||ny<0||ny>=h||nz<0||nz>=d || !g.inside(nx,ny,nz)) continue;
                 int i = idx(w,wh,nx,ny,nz);
                 if (seen[i]) continue;
                 seen[i] = true;

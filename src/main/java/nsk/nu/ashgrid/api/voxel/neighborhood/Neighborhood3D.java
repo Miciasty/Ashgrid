@@ -1,6 +1,11 @@
 package nsk.nu.ashgrid.api.voxel.neighborhood;
 
-/** Precomputed neighbor offsets for 3D grids. */
+/**
+ * Precomputed neighbor offsets for 3D grids, in the declared array order.
+ * Public arrays are retained for compatibility and must be treated as read-only, including rows.
+ * Callers needing custom offsets must deep-copy them. Mutation changes later morphology/component
+ * operations; concurrent mutation is unsupported. No operation snapshots these arrays.
+ */
 public final class Neighborhood3D {
     private Neighborhood3D() {}
 

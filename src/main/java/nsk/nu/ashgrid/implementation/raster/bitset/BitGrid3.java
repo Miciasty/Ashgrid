@@ -1,5 +1,7 @@
 package nsk.nu.ashgrid.implementation.raster.bitset;
 
+import nsk.nu.ashgrid.api.raster.util.GridMath;
+
 import java.util.BitSet;
 
 /** Boolean occupancy grid: 1 bit per voxel. */
@@ -8,8 +10,8 @@ public final class BitGrid3 {
     private final BitSet bits;
 
     public BitGrid3(int width, int height, int depth){
-        if (width<=0||height<=0||depth<=0) throw new IllegalArgumentException();
-        this.w=width; this.h=height; this.d=depth; this.bits=new BitSet(w*h*d);
+        int total = GridMath.cellCount(width,height,depth);
+        this.w=width; this.h=height; this.d=depth; this.bits=new BitSet(total);
     }
 
     public boolean get(int x,int y,int z){ check(x,y,z); return bits.get(idx(x,y,z)); }

@@ -2,13 +2,15 @@ package nsk.nu.ashgrid.api.raster.view;
 
 import nsk.nu.ashgrid.api.raster.Grid3i;
 
-/** A view into a sub-region of another {@link Grid3i}. */
+/** Live read/write view into a contained sub-region; source mutations remain visible. */
 public final class SubGrid3i implements Grid3i {
     private final Grid3i src; private final int ox,oy,oz, w,h,d;
 
     public SubGrid3i(Grid3i src, int ox, int oy, int oz, int width, int height, int depth) {
         this.src = src; this.ox=ox; this.oy=oy; this.oz=oz; this.w=width; this.h=height; this.d=depth;
         if (w<=0||h<=0||d<=0) throw new IllegalArgumentException("All dimensions must be > 0");
+        if (ox<0||oy<0||oz<0 || (long)ox+w>src.width() || (long)oy+h>src.height() || (long)oz+d>src.depth())
+            throw new IllegalArgumentException("sub-region outside source dimensions");
     }
 
     @Override public int get(int x,int y,int z){ check(x,y,z); return src.get(ox+x, oy+y, oz+z); }

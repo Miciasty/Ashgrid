@@ -2,7 +2,7 @@ package nsk.nu.ashgrid.api.raster.view;
 
 import nsk.nu.ashgrid.api.raster.Grid3i;
 
-/** Read-only wrapper around a {@link Grid3i}. */
+/** Read-only live wrapper around a {@link Grid3i}, not a snapshot; source mutations remain visible. */
 public final class ConstGrid3i implements Grid3i {
     private final Grid3i src;
     public ConstGrid3i(Grid3i src){ this.src = src; }

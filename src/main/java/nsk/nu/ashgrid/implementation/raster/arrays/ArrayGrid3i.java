@@ -1,6 +1,7 @@
 package nsk.nu.ashgrid.implementation.raster.arrays;
 
 import nsk.nu.ashgrid.api.raster.BoundedGrid3i;
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 
 /** Dense 3D int grid backed by a 1D array in Z-major order (z,y,x). */
 public final class ArrayGrid3i implements BoundedGrid3i {
@@ -8,9 +9,9 @@ public final class ArrayGrid3i implements BoundedGrid3i {
     private final int[] data;
 
     public ArrayGrid3i(int width, int height, int depth) {
-        if (width<=0||height<=0||depth<=0) throw new IllegalArgumentException("dims > 0");
+        int total = GridMath.cellCount(width,height,depth);
         this.w=width; this.h=height; this.d=depth;
-        this.data = new int[w*h*d];
+        this.data = new int[total];
     }
 
     @Override public int get(int x,int y,int z){ check(x,y,z); return data[idx(x,y,z)]; }

@@ -5,6 +5,7 @@ import nsk.nu.ashgrid.api.raster.Grid3i;
 /**
  * Read/write view that clamps coordinates to the nearest valid cell.
  * Writes are clamped to the border cell.
+ * This is a live view, not a snapshot; source mutations remain visible.
  */
 public final class ClampedGrid3i implements Grid3i {
     private final Grid3i src;

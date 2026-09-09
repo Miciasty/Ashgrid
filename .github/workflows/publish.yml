@@ -3,33 +3,50 @@ name: Publish Package
 on:
   release:
     types: [published]
-  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Debug trigger
-        run: echo "event=${{ github.event_name }} action=${{ github.event.action }}"
-
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
           cache: maven
           server-id: github
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
-
+      - name: Verify release version and tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mvn -version
+          mvn -B -q org.apache.maven.plugins:maven-help-plugin:3.5.1:evaluate -Dexpression=project.version -Doutput=release-version.txt
+          version=$(cat release-version.txt)
+          [[ "$version" != *SNAPSHOT* ]]
+          [[ "$RELEASE_TAG" == "v$version" ]]
+      - name: Verify release artifacts
+        run: mvn -B clean verify
+      - name: Identify artifacts
+        id: artifacts
+        run: bash .github/scripts/artifact-metadata.sh
       - name: Publish to GitHub Packages
-        run: mvn --batch-mode deploy --file pom.xml
+        run: mvn -B deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attach artifacts to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          ARTIFACT_NAME: ${{ steps.artifacts.outputs.finalName }}
+        run: gh release upload "$RELEASE_TAG" "target/$ARTIFACT_NAME.jar" "target/$ARTIFACT_NAME-sources.jar" "target/$ARTIFACT_NAME-javadoc.jar"

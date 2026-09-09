@@ -1,6 +1,7 @@
 package nsk.nu.ashgrid.implementation.voxel.ops.morphology;
 
 import nsk.nu.ashgrid.api.raster.ReadableGrid3i;
+import nsk.nu.ashgrid.api.raster.util.GridMath;
 import nsk.nu.ashgrid.api.raster.WritableGrid3i;
 import nsk.nu.ashgrid.api.voxel.neighborhood.Neighborhood3D;
 import nsk.nu.ashgrid.api.voxel.ops.morphology.Morphology;
@@ -16,7 +17,8 @@ public final class MorphologyBasic implements Morphology {
         final int[][] offs = switch (nh) {
             case N6 -> Neighborhood3D.N6; case N18 -> Neighborhood3D.N18; default -> Neighborhood3D.N26; };
         final int w=src.width(), h=src.height(), d=src.depth();
-        final int wh=w*h, total=wh*d;
+        final int total=GridMath.cellCount(w,h,d), wh=w*h;
+        requireOutput(src,dst);
         for (int i=0;i<total;i++){
             int z=i/wh, rem=i-z*wh, y=rem/w, x=rem-y*w;
             boolean on = fg.test(src.get(x,y,z));
@@ -33,7 +35,8 @@ public final class MorphologyBasic implements Morphology {
         final int[][] offs = switch (nh) {
             case N6 -> Neighborhood3D.N6; case N18 -> Neighborhood3D.N18; default -> Neighborhood3D.N26; };
         final int w=src.width(), h=src.height(), d=src.depth();
-        final int wh=w*h, total=wh*d;
+        final int total=GridMath.cellCount(w,h,d), wh=w*h;
+        requireOutput(src,dst);
         for (int i=0;i<total;i++){
             int z=i/wh, rem=i-z*wh, y=rem/w, x=rem-y*w;
             boolean on = fg.test(src.get(x,y,z));
@@ -43,5 +46,12 @@ public final class MorphologyBasic implements Morphology {
             }
             dst.set(x,y,z, on?1:0);
         }
+    }
+
+    private static void requireOutput(ReadableGrid3i src, WritableGrid3i dst) {
+        if (src == dst) throw new IllegalArgumentException("output must not alias source");
+        if (dst instanceof ReadableGrid3i out
+                && (out.width()!=src.width() || out.height()!=src.height() || out.depth()!=src.depth()))
+            throw new IllegalArgumentException("output dimensions must match source");
     }
 }

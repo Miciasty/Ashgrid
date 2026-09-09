@@ -4,7 +4,7 @@ import nsk.nu.ashgrid.api.raster.Grid3i;
 import nsk.nu.ashgrid.api.raster2d.Grid2i;
 
 /**
- * 2D slice view of a 3D grid. Axis order:
+ * Live read/write slice of a 3D grid; source mutations remain visible. Axis order:
  *  - XY at fixed z
  *  - XZ at fixed y
  *  - YZ at fixed x
@@ -18,6 +18,8 @@ public final class SliceView2D implements Grid2i {
 
     public SliceView2D(Grid3i src, Plane plane, int fixedIndex) {
         this.src = src; this.plane = plane; this.fixed = fixedIndex;
+        int size = switch (plane) { case XY -> src.depth(); case XZ -> src.height(); case YZ -> src.width(); };
+        if (fixedIndex < 0 || fixedIndex >= size) throw new IllegalArgumentException("slice outside source dimensions");
     }
 
     @Override public int get(int u,int v) {
