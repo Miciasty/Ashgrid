@@ -46,6 +46,10 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 | [GRID-005](#grid-005) | P1 | AUDYT | Zweryfikować kontrakty i pakowanie providerów SPI |
 | [GRID-006](#grid-006) | P1 | DECYZJA | Utrzymać zgodność SquareXZChunkScheme i helperów |
 | [GRID-007](#grid-007) | P1 | INSPEKCJA | Dostosować CI, pakowanie i dowody wydania |
+| [GRID-008](#grid-008) | P2 | DECYZJA | Udostępnić małe widoki backendów |
+| [GRID-009](#grid-009) | P2 | DECYZJA | Uzupełnić cykl życia danych rzadkich |
+| [GRID-010](#grid-010) | P2 | DECYZJA | Dodać operacje na regionach i niezależne kopie |
+| [GRID-011](#grid-011) | P2 | DECYZJA | Umożliwić porcjowanie kosztownych operacji |
 
 <a id="grid-001"></a>
 
@@ -244,11 +248,91 @@ Maven używa zależności rozstrzygniętych z POM i repozytoriów artefaktów. Z
 
 **Wynik korekty 2026-09-09:** Końcowe mvn -B clean verify oraz dependency:tree: 80 testów jednostkowych + 4 testy artefaktów PASS, JDK 25.0.2, Maven 3.9.16, compiler 3.13.0 release 21. Javadoc all,-missing/failOnError=true PASS. IntelliJ build PASS. CI obejmuje wszystkie branche i PR-y, Temurin 21/25, dokładne nazwy main/sources/Javadoc. Domyślny Ashcore 1.0.1 oraz osobny wariant 1.1.0-SNAPSHOT zostały zidentyfikowane i przetestowane; JUnit pozostaje test-only. Publikacja do Packages/Release/Central i zdalne CI są jawnie niezweryfikowane; nie uruchamiano deploy. Szczegóły w docs/RELEASE.md.
 
+<a id="grid-008"></a>
+
+## GRID-008 — Udostępnić małe widoki backendów
+
+**Status:** GOTOWE
+
+**Priorytet:** P2
+
+**Dowód:** DECYZJA
+
+**Kontrakt:** sekcje 3.2, 4.2, 5
+
+**Zakres zaakceptowany po korekcie:** ograniczone widoki sparse/chunked oraz reprezentacja 0/1 BitGrid3.
+Widoki należą do Ashgrid; konwersje ramek, polityka nawigacji i integracje silnika pozostają poza nim.
+
+- [x] `SparseGridView3i` mapuje lokalne zero na minimum okna, uwzględnia default i nie kopiuje danych.
+- [x] `BitGrid3iView` zachowuje boolean API backendu; zapis innych wartości niż 0/1 jest odrzucany.
+- [x] Testy obejmują algorytm na obu backendach, mutację przez widok, granice i int min/max.
+
+**Dowód wykonania:** `BackendViewsTest`, pakowany `AshgridStorageExample`, clean verify PASS.
+
+<a id="grid-009"></a>
+
+## GRID-009 — Uzupełnić cykl życia danych rzadkich
+
+**Status:** GOTOWE
+
+**Priorytet:** P2
+
+**Dowód:** DECYZJA
+
+**Kontrakt:** sekcje 3.2, 4.1, 4.4
+
+- [x] Opcjonalne `StoredGrid3i`: iteracja wartości różnych od default, licznik i clear bez nowych wymagań dla implementatorów `SparseGrid3i`.
+- [x] Jawne usuwanie komórek/chunków, iteracja chunków, pruning pustych chunków i liczniki zaalokowanych slotów.
+- [x] Zachowane `has` i brak automatycznego zwalniania chunków po zapisie default; opisany koszt sortowania/skanowania.
+- [x] Determinizm względem kolejności wstawiania, niezerowy default, ujemne współrzędne i padding chunków przy granicach int sprawdzone testami.
+
+**Dowód wykonania:** `StorageLifecycleTest` PASS. Liczniki slotów nie są pomiarem sterty JVM.
+
+<a id="grid-010"></a>
+
+## GRID-010 — Dodać operacje na regionach i niezależne kopie
+
+**Status:** GOTOWE
+
+**Priorytet:** P2
+
+**Dowód:** DECYZJA
+
+**Kontrakt:** sekcje 3.2, 4.2, 4.3
+
+- [x] `GridOps.fill/copy/snapshot` z lokalnymi przedziałami półotwartymi i walidacją zakresów.
+- [x] Copy działa dla nakładających się widoków; opcjonalny bufor roboczy można wykorzystać ponownie.
+- [x] Snapshot jest niezależną, mutowalną siatką dense o lokalnym początku zero.
+- [x] Opisane i przetestowane puste regiony, przepełnienie przesunięcia, zbyt mały bufor i częściowe wyniki anulowania.
+
+**Dowód wykonania:** `GridOpsTest`, oba pakowane przykłady README PASS.
+
+<a id="grid-011"></a>
+
+## GRID-011 — Umożliwić porcjowanie kosztownych operacji
+
+**Status:** GOTOWE
+
+**Priorytet:** P2
+
+**Dowód:** DECYZJA
+
+**Kontrakt:** sekcje 3.2, 4.2, 4.4, 4.5
+
+- [x] `VoxelTask.step` obejmuje flood fill, komponenty, Chamfer, morfologię i fill/copy; także czyszczenie i skanowanie wyjścia komponentów zużywa budżet.
+- [x] Wstrzymanie/wznowienie tego samego zadania, terminalne anulowanie oraz stany COMPLETED/CANCELLED/FAILED są rozróżnione.
+- [x] Bufory flood fill i komponentów są wielokrotnego użytku i nie dopuszczają dwóch aktywnych zadań; błąd/anulowanie zwalniają wyłączność.
+- [x] Zachowane metody synchroniczne i SPI; opisane własność danych, częściowe zapisy, jednostki pracy i koszty poza budżetem.
+- [x] Wyniki znanych przypadków, kolejność BFS, różne porcje, błędy callbacków i ponowne użycie buforów sprawdzone testami.
+
+**Dowód wykonania:** 10 testów `SteppedOperationsTest` i dotychczasowe niezależne regresje PASS.
+`OperationBenchmark.java` wykonany jako mała próba czasowa, bez deklaracji gwarantowanego opóźnienia lub przewagi wydajności; wyniki w docs/RELEASE.md.
+
 ## Stan przekazania i dziennik sesji
 
 **Historyczny stan przed korektą 2026-09-09:** wszystkie zadania pozostawały OTWARTE. Utworzono dokumentację; nie wprowadzono korekt kodu, nie wykonano buildów bibliotek ani publikacji. Nie uznawaj samego dodania ISSUES.md za realizację żadnego zadania.
 
-**Aktualny stan:** GRID-001–GRID-007 GOTOWE w opisanym zakresie. Gałąź fix/ashgrid-issues-20260909, snapshot wejściowy d58bfba, wersja 1.3.0-SNAPSHOT. Lokalnie 80 + 4 testy Ashgrid oraz 103 testy konsumentów PASS; testy Ashgrid przechodzą z Ashcore 1.0.1 i 1.1.0-SNAPSHOT. Dowody i migracja: [docs/RELEASE.md](docs/RELEASE.md). To nie jest deklaracja pełnego audytu każdego publicznego API ani publikacji.
+**Aktualny stan:** GRID-001–GRID-011 GOTOWE w opisanym zakresie. Gałąź feat/ashgrid-storage-operations-20260909, snapshot wejściowy 20152ff (korekta 16a2f71), wersja nadal 1.3.0-SNAPSHOT. Lokalnie 102 + 4 testy Ashgrid oraz 103 testy konsumentów PASS; testy Ashgrid przechodzą z Ashcore 1.0.1 i 1.1.0-SNAPSHOT. Zgodność publicznego API i klienta skompilowanego przed rozszerzeniami PASS. Dowody i migracja: [docs/RELEASE.md](docs/RELEASE.md). To nie jest deklaracja pełnego audytu każdego publicznego API ani publikacji.
 
 **Następny krok:** przed wydaniem uruchomić zdalne CI Java 21/25, wybrać niewydany numer i docelową opublikowaną wersję Ashcore oraz potwierdzić destynacje. Kontynuować zakresy SPACE-001/SPACE-005, TRACE-002 i NAV-007 w ich repozytoriach; nie mylić lokalnych prób integracyjnych z aktualizacją ich POM.
 
@@ -257,5 +341,5 @@ Po kolejnej sesji dopisz wiersz i uzupełnij statusy odpowiednich zadań. Zapisz
 | Data / commit | ID i decyzja | Zmiana | Polecenie / test i rzeczywisty wynik | Pozostałe zależności / następny krok |
 | --- | --- | --- | --- | --- |
 | 2026-09-09 / punkt odniesienia powyżej | Wszystkie: OTWARTE | Utworzenie planu korekt | Inspekcja statyczna; testów bibliotek nie uruchomiono | Rozpocząć od wskazanego P1 |
-
 | 2026-09-09 / commit dodający ten wpis; snapshot d58bfba | GRID-001–GRID-007: GOTOWE | Korekty algorytmów, zakresów, danych, kontraktów API/SPI, Javadoc, CI; wersja 1.3.0-SNAPSHOT | Dwie pierwsze regresje FAIL przed poprawką; supercover 10/22 FAIL. Końcowe clean verify 80 + 4 PASS, JDK 25.0.2/Maven 3.9.16/release 21. Ashspace 31, Ashtrace 43, Ashnav 29 PASS; przykłady i fixture SPACE-001/TRACE-002 PASS; javap bez usuniętych sygnatur | Publikacja i zdalne CI niewykonane; szersze kwestie mappera pozostają w SPACE-001. Dowody/SHA/polecenia: docs/RELEASE.md |
+| 2026-09-09 / commit dodający ten wpis; snapshot 20152ff | GRID-008–GRID-011: GOTOWE | Widoki backendów, cykl życia sparse/chunked, GridOps i porcjowane operacje z buforami | IntelliJ: pierwszy compile FAIL (nazwa empty), po korekcie PASS; clean verify 102 + 4 PASS dla obu wersji Ashcore; 103 testy konsumentów i przykłady PASS; 313 wpisów API bez usunięć; stary klient binarny PASS; mały benchmark wykonany | Wersja nadal 1.3.0-SNAPSHOT; zdalne CI i publikacja niewykonane; koszty callbacków/alokacji poza budżetem. Szczegóły: docs/RELEASE.md |

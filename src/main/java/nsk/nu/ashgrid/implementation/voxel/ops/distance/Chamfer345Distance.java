@@ -1,6 +1,7 @@
 package nsk.nu.ashgrid.implementation.voxel.ops.distance;
 
 import nsk.nu.ashgrid.api.raster.util.GridMath;
+import nsk.nu.ashgrid.api.voxel.ops.VoxelTask;
 import nsk.nu.ashgrid.api.voxel.ops.distance.DistanceTransform;
 
 /**
@@ -15,35 +16,41 @@ public final class Chamfer345Distance implements DistanceTransform {
 
     @Override
     public void compute(int w,int h,int d, Mask src, float[] out) {
+        begin(w,h,d,src,out).runToCompletion();
+    }
+
+    /**
+     * One unit initializes or relaxes one cell (at most 13 neighbors). Three passes, 3*volume units.
+     * The caller owns and may reuse out after completion/cancellation; no volume-sized scratch is needed.
+     * Source and output must remain exclusively available to this task between steps.
+     */
+    public VoxelTask begin(int w,int h,int d, Mask src, float[] out) {
         final int total = GridMath.cellCount(w,h,d);
         final int wh = w*h; final float INF=Float.POSITIVE_INFINITY;
         if (out.length != total) throw new IllegalArgumentException("out size mismatch");
         if (src == null) throw new NullPointerException("src");
-
-        for (int z=0,i=0; z<d; z++)
-            for (int y=0; y<h; y++)
-                for (int x=0; x<w; x++, i++)
-                    out[i] = src.isForeground(x,y,z) ? 0f : INF;
 
         final int[][] Nf={{-1,0,0},{0,-1,0},{0,0,-1}};
         final int[][] Ne={{-1,-1,0},{1,-1,0},{-1,0,-1},{1,0,-1},{0,-1,-1},{0,1,-1}};
         final int[][] Nc={{-1,-1,-1},{1,-1,-1},{-1,1,-1},{1,1,-1}};
         final float wf=3f,we=4f,wc=5f;
 
-        for (int z=0; z<d; z++)
-            for (int y=0; y<h; y++)
-                for (int x=0; x<w; x++) {
-                    V(w, h, d, out, wh, Nf, Ne, Nc, wf, we, wc, z, y, x);
-                }
-
         final int[][] NfB={{1,0,0},{0,1,0},{0,0,1}};
         final int[][] NeB={{1,1,0},{-1,1,0},{1,0,1},{-1,0,1},{0,1,1},{0,-1,1}};
         final int[][] NcB={{1,1,1},{-1,1,1},{1,-1,1},{-1,-1,1}};
-        for (int z=d-1; z>=0; z--)
-            for (int y=h-1; y>=0; y--)
-                for (int x=w-1; x>=0; x--) {
-                    V(w, h, d, out, wh, NfB, NeB, NcB, wf, we, wc, z, y, x);
-                }
+        return new VoxelTask() {
+            private int phase,index;
+
+            @Override protected boolean advance(){
+                int i=phase==2?total-1-index:index;
+                int z=i/wh, rem=i-z*wh, y=rem/w, x=rem-y*w;
+                if (phase==0) out[i]=src.isForeground(x,y,z)?0f:INF;
+                else if (phase==1) V(w,h,d,out,wh,Nf,Ne,Nc,wf,we,wc,z,y,x);
+                else V(w,h,d,out,wh,NfB,NeB,NcB,wf,we,wc,z,y,x);
+                if (++index==total) { index=0; phase++; }
+                return phase==3;
+            }
+        };
     }
 
     private void V(int w, int h, int d, float[] out, int wh, int[][] nf, int[][] ne, int[][] nc, float wf, float we, float wc, int z, int y, int x) {

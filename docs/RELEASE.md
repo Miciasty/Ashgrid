@@ -1,5 +1,74 @@
 # Ashgrid 1.3.0-SNAPSHOT verification and migration
 
+## Storage and operation extensions, 2026-09-09
+
+The accepted additions are on `feat/ashgrid-storage-operations-20260909`, starting from snapshot
+`20152ff` (the corrected sources were committed as `16a2f71`). The version stays **1.3.0-SNAPSHOT**:
+this extends the same unpublished development version. No production dependency was added.
+
+- `SparseGridView3i` and `BitGrid3iView` provide live bounded integer access to existing backends.
+  Bit writes accept only 0/1. These views do not perform frame conversion or impose navigation policy.
+- Optional `StoredGrid3i` adds deterministic non-default iteration, stored counts and clear.
+  Hash storage supports cell removal; chunked storage exposes chunk iteration/counts, allocated slots,
+  explicit chunk removal and pruning. Existing `has` and retained-empty-chunk behavior stay intact.
+- `GridOps` fills/copies local half-open regions and makes independent dense snapshots. Copy supports
+  overlapping views by reading to scratch before writing. Caller-supplied scratch can be reused.
+- Concrete flood-fill, components, chamfer and morphology providers expose stepped operations.
+  `VoxelTask` distinguishes completion, cancellation and failure. Fill/copy also support stepping.
+  Flood-fill/components have exclusive reusable workspaces. Pausing means retaining the task between
+  step calls; cancellation is terminal. Partial writes remain visible. Budgets count work units and
+  do not bound allocations, workspace preparation, callback time or wall-clock duration.
+
+Existing SPI interfaces/IDs and public signatures are retained. `javap -public` comparison checked
+313 baseline public type/member entries and found no removals. Two private BFS point records were
+replaced by primitive queues; private class-file names are not supported API. The standalone
+`src/it/BinaryCompatibility.java` compiled against the pre-extension JAR and ran unchanged with the
+new JAR, checking concrete method calls, sparse interfaces and algorithm SPI discovery.
+
+Verification on OpenJDK 25.0.2 / Maven 3.9.16 / compiler release 21:
+
+| Check | Result |
+| --- | --- |
+| `mvn -B clean verify dependency:tree` with Ashcore 1.0.1 | 102 unit + 4 packaged-artifact tests PASS; Javadoc PASS. |
+| Same build in an isolated repository with identified Ashcore 1.1.0-SNAPSHOT | 102 + 4 PASS. |
+| Copied consumer builds against the extended Ashgrid | Ashspace 31, Ashtrace 43, Ashnav 29 tests PASS. |
+| README examples and `ConsumerContracts.java` | Both Ashgrid examples compile/run from the packaged JAR; consumer examples and mapping/tracing fixture PASS. |
+| IntelliJ build and public API/binary-client checks | PASS. |
+
+The 22 added unit tests cover live/default-backed views, signed-int endpoint windows, deterministic
+sparse iteration, chunk retention/removal, half-open bulk bounds, alias-safe copies, independent
+snapshots, work budgets in all phases, BFS order, known component labels and neighborhood geometry,
+pause/resume, terminal cancellation, callback failures and workspace reuse. The previous independent
+Chamfer/Dijkstra and geometry regression checks still pass through the synchronous methods.
+An initial IntelliJ compile caught a call to nonexistent `IntBox3.isEmpty`; it was corrected to the
+existing `empty` method before testing. No failing build is counted as a pass.
+
+Consumer source/test copies and their POMs are under `.verification/extensions/consumers`; artifacts
+are isolated in `.verification/extensions/repository`. Only copied POMs were changed, using
+`1.0.0-extensionscheck-SNAPSHOT` for space/trace/nav. The tested Ashcore snapshot has SHA-256
+`9b7758dee82a8fa7338afcc7b7bf22fe02682aaff670c10dd4971be9390c845f`.
+Logs and local commands are in `.verification/extensions/verify-consumers.ps1`,
+`check-compatibility.ps1`, `consumer-results.log`, `compatibility-results.log`, and
+`.verification/extensions-verify.log`. These local scratch files are ignored; the standalone Java
+fixtures and behavior tests are committed. Neighboring checkouts were not modified.
+
+`src/it/OperationBenchmark.java` provides a small reproducible timing smoke check. On this Windows 11
+amd64/JDK 25.0.2 session, a 64x32x16 all-foreground dense grid, 20 warmups and 100 measured runs gave:
+
+| Operation | Mean ms/operation in this run |
+| --- | --- |
+| Flood fill, fresh workspace | 0.932 |
+| Flood fill, reused workspace, steps of 256 | 0.864 |
+| Components N6, fresh workspace | 1.289 |
+| Components N6, reused workspace, steps of 256 | 1.299 |
+
+Compile this fixture with `javac --release 21` against the main Ashgrid/Ashcore JARs and run its main
+class on that classpath. This single-process timing has no confidence intervals or allocation
+measurement; it does not establish a speedup, a worst-case latency or performance on sparse worlds.
+Remote Java 21/25 CI and publication remain release steps, as described below.
+
+## Initial correction evidence (before these extensions)
+
 This is a development build, not a published release. Work follows Blackframe contract revision 2.0
 and GRID-001 through GRID-007. The starting snapshot is `d58bfba`, on
 `fix/ashgrid-issues-20260909`. Source corrections are the commit that adds this document.
@@ -40,7 +109,7 @@ mvn -version
 mvn -B clean verify org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree
 ```
 
-Final result: **80 unit tests + 4 packaged-artifact tests passed**, no failures/errors/skips.
+Initial correction result: **80 unit tests + 4 packaged-artifact tests passed**, no failures/errors/skips.
 The original snapshot passed its existing 53 tests. The first two new regression tests failed before
 the fixes: DDA returned `-0.2` instead of `0.2`, and reflected Chamfer cost was `6` instead of `4`.
 DDA values were confirmed in IntelliJ at the callback, with the test caller visible in the stack.

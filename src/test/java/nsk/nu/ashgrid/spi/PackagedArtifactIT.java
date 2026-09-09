@@ -68,15 +68,21 @@ class PackagedArtifactIT {
         // GIVEN
         String readme = Files.readString(Path.of(System.getProperty("ashgrid.basedir"),"README.md"));
         var example = Pattern.compile("```java\\s*\\R(.*?)```",Pattern.DOTALL).matcher(readme);
-        assertTrue(example.find());
-        Path source = temp.resolve("AshgridQuickStart.java"); Files.writeString(source,example.group(1));
-        compile(source);
         ClassLoader previous = Thread.currentThread().getContextClassLoader();
+        int examples=0;
         // WHEN / THEN
-        try (URLClassLoader loader = loader(temp)) {
-            Thread.currentThread().setContextClassLoader(loader);
-            loader.loadClass("AshgridQuickStart").getMethod("main",String[].class).invoke(null,(Object)new String[0]);
-        } finally { Thread.currentThread().setContextClassLoader(previous); }
+        while (example.find()) {
+            var name=Pattern.compile("public final class (\\w+)").matcher(example.group(1));
+            assertTrue(name.find(),"README Java blocks must be complete examples");
+            Path source=temp.resolve(name.group(1)+".java"); Files.writeString(source,example.group(1));
+            compile(source);
+            try (URLClassLoader loader = loader(temp)) {
+                Thread.currentThread().setContextClassLoader(loader);
+                loader.loadClass(name.group(1)).getMethod("main",String[].class).invoke(null,(Object)new String[0]);
+            } finally { Thread.currentThread().setContextClassLoader(previous); }
+            examples++;
+        }
+        assertTrue(examples>=2);
     }
 
     @Test

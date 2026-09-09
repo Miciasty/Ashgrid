@@ -53,9 +53,9 @@ You can then run region tools on affected blocks with the same grid primitives:
 
 1. Positions are mapped to integer cells (`floor`-based indexing).
 2. Traversal walks cell-by-cell with ray parameter intervals (`[tEnter, tExit)`).
-3. Storage backends expose a common grid API (dense, bitset, sparse, chunked).
+3. Dense grids expose bounded integer access; small views connect bitset and sparse/chunked storage to that API.
 4. Raster algorithms iterate cells using neighborhood definitions (`N6`, `N18`, `N26`).
-5. Views (subgrid/clamped/masked/slice) let you reuse algorithms on limited regions.
+5. Views (sparse window/bit/subgrid/clamped/masked/slice) let you reuse algorithms on limited regions.
 
 ### Coordinates and boundaries
 
@@ -111,6 +111,64 @@ ordered +X,-X,+Y,-Y,+Z,-Z. Region boxes/spheres scan Z,Y,X and cylinders Y,Z,X.
 
 ## 6. Big-O for operations
 
+### Storage, regions and work budgets
+
+`SparseGridView3i(storage, bounds)` exposes a live local window: `(0,0,0)` maps to the bounds minimum.
+Missing cells return the backend default and remain inside the window. Constructing the view allocates
+no cells; writes can materialize chunks. Its origin/dimensions overload also supports a last cell at
+`Integer.MAX_VALUE`. Positive dimensions and representable last-cell coordinates are required.
+`BitGrid3iView(bits)` reads 0/1 and accepts only 0/1 writes; other values throw instead of discarding
+integer information. Component labels need integer output storage. Boolean `BitGrid3.get/set` remain available. These views change representation
+and indexing; frame conversion, navigation policies and engine adapters belong to their owning layers.
+
+Both sparse backends implement the optional `StoredGrid3i` interface. `storedCellCount` and
+`forEachStored` concern non-default values; `has` still means materialized storage. Hash iteration
+orders cells by Z,Y,X. Chunked iteration orders chunk coordinates by Z,Y,X, then local cells by Z,Y,X.
+These are deterministic but different orders. Callbacks must not modify the storage.
+`HashSparseGrid3i.remove` removes a cell. Chunked `forEachChunk` includes empty materialized chunks;
+`removeChunk(cx,cy,cz)` takes chunk coordinates, and `pruneEmptyChunks()` explicitly releases chunks
+containing only defaults. `clear()` releases all entries/chunks. `chunkCount` and `allocatedCellCount`
+report allocation counts; the latter includes default slots and padding at signed-int coordinate limits,
+and does not estimate JVM heap bytes.
+
+`GridOps.fill` and `copy` use contained, local, half-open `IntBox3` regions. Copy reads the whole region
+before writing, preserving original values even for overlapping views; it needs `int[volume]` scratch,
+which the caller may supply and reuse. Scratch must not back either grid or serve another active task.
+Empty fill/copy regions are no-ops. `snapshot` creates an independent mutable dense grid with local
+origin zero; empty snapshots are rejected. Use a sparse window to snapshot a selected sparse region.
+
+`FloodFillQueue.begin`, `ConnectedComponentsBFS.begin`, `Chamfer345Distance.begin`,
+`MorphologyBasic.beginDilate/beginErode` and `GridOps.beginFill/beginCopy` return a `VoxelTask`.
+Existing synchronous methods run the same calculations to completion. Stepping is an additional
+concrete-provider API; existing SPI interfaces and IDs remain unchanged.
+
+Call `step(maxWork)` to perform at most that many work units. Zero does nothing; a negative budget
+throws. Stop calling it to pause and call it again to resume. `cancel()`/`close()` are terminal and
+leave partial output. Status distinguishes `RUNNING`, `COMPLETED`, `CANCELLED` and `FAILED`;
+callback exceptions propagate and mark the task failed. `workDone()` counts successfully completed
+units, while flood/component `count()` reports visits/components discovered so far. Reentrant stepping
+or cancellation from a callback is rejected. No executor, tick scheduling or rollback is provided.
+
+| Task | One work unit |
+| --- | --- |
+| Flood fill | Dequeue one candidate, including rejected candidates; examine at most six neighbors. |
+| Components | Clear one output cell, scan one source position, or dequeue one cell with at most 26 neighbors. |
+| Chamfer | Initialize or relax one cell; three passes, `3n` units. |
+| Morphology | Produce one cell after at most 26 neighbor checks. |
+| Fill / copy | One write / one read or write; fill takes `n`, copy takes `2n` units. |
+
+Budgets bound cell work, not elapsed time, allocations or callback cost. Flood-fill and component
+`Workspace` objects retain primitive queue capacity for reuse and are held by one active task at a
+time. Completion, cancellation or failure releases the workspace. Flood-fill begin clears previously
+used visited-bit words; clearing and buffer growth are outside the step budget. Chamfer reuses the
+caller-owned float output; morphology needs no volume-sized scratch beyond output (composition
+already accepts a temporary grid). Dispose of unused workspaces to let the GC reclaim retained buffers.
+Sources, dimensions, predicates and neighborhoods must stay stable between steps; outputs belong
+exclusively to the task. Flood-fill callbacks may still edit their current cell. Copy cancellation during
+its reading phase leaves the destination untouched; cancellation during writing can leave a partial copy.
+
+### Cost model
+
 Definitions:
 - `k`: number of visited cells along a ray/line.
 - `n`: number of cells in processed volume.
@@ -127,11 +185,16 @@ Definitions:
 | `Raycast.first` | `O(k)` worst case | Stops early on first solid cell. |
 | `LineOfSight.clear` | `O(k)` | Traverses segment cells, excludes start cell. |
 | `Line3D.trace` / `Line3DSupercover.trace` | `O(k)` | `k` depends on segment length and raster mode. |
-| `FloodFill.fill` | `O(n+r)` | Allocates/initializes `O(n)` visited flags; queue uses `O(r)` space. |
+| `FloodFill.fill` | `O(n+r)` worst case | Visited bits use up to `O(n)` space; primitive candidate queue uses `O(r+1)` space. |
 | `ConnectedComponents.label` | `O(n)` | Full-volume scan + BFS expansion. |
 | `MorphologyOps` (`dilate/erode/open/close`) | `O(n)` | Neighborhood size is constant (`6/18/26`). |
 | `DistanceTransform` (chamfer) | `O(n)` | Linear passes over full volume. |
 | `GridSets.union/intersect/subtract/invert` | `O(n)` | Element-wise full-volume set ops. |
+| `GridOps.fill/copy/snapshot` | `O(n)` | Fill needs `O(1)` scratch; copy `O(n)` scratch; snapshot `O(n)` independent output. |
+| Hash `forEachStored` | `O(s log s)` | Sorted keys use `O(s)` temporary memory; stored count is `O(1)`. |
+| Chunked `forEachStored` | `O(c log c + c*v)` | Sorted chunk keys use `O(c)` temporary memory. |
+| Chunked `forEachChunk` | `O(c log c)` | Includes empty materialized chunks; `O(c)` temporary memory. |
+| Chunked `storedCellCount/pruneEmptyChunks` | `O(c*v)` | Scans allocated slots. Allocation counts are `O(1)`. |
 
 These costs assume constant-time grid access and callbacks. Dense int storage uses about `4n` bytes
 plus array/object overhead; bit storage about `n/8` bytes. A sparse map uses `O(s)` entries with hash
@@ -215,6 +278,42 @@ public final class AshgridQuickStart {
 }
 ```
 
+Bounded sparse editing with reusable work buffers:
+
+```java
+import nsk.nu.ashgrid.api.grid.bounds.IntBox3;
+import nsk.nu.ashgrid.api.raster.ops.GridOps;
+import nsk.nu.ashgrid.api.raster.view.BitGrid3iView;
+import nsk.nu.ashgrid.api.raster.view.SparseGridView3i;
+import nsk.nu.ashgrid.implementation.raster.bitset.BitGrid3;
+import nsk.nu.ashgrid.implementation.raster.chunked.ChunkedGrid3i;
+import nsk.nu.ashgrid.implementation.voxel.ops.floodfill.FloodFillQueue;
+
+public final class AshgridStorageExample {
+    public static void main(String[] args) {
+        var storage = new ChunkedGrid3i(4,4,4);
+        var window = new SparseGridView3i(storage,new IntBox3(-2,-1,-1,2,2,1));
+        GridOps.fill(window,1);
+        var snapshot = GridOps.snapshot(window);
+
+        var workspace = new FloodFillQueue.Workspace();
+        try (var task = new FloodFillQueue().begin(window,0,0,0,v -> v==1,
+                (x,y,z,v) -> window.set(x,y,z,0),workspace)) {
+            task.step(5);
+            // Keep task to resume later. This standalone example finishes it here.
+            while (!task.isDone()) task.step(5);
+            if (task.count()!=24) throw new IllegalStateException("Unexpected fill count");
+        }
+        storage.pruneEmptyChunks();
+
+        var bits = new BitGrid3iView(new BitGrid3(4,3,2));
+        GridOps.copy(snapshot,bits);
+        if (storage.chunkCount()!=0 || bits.get(0,0,0)!=1)
+            throw new IllegalStateException("Snapshot/storage mismatch");
+    }
+}
+```
+
 ## Feature map
 
 - Indexing and chunks:
@@ -228,9 +327,13 @@ public final class AshgridQuickStart {
 - Raster operations:
   - `Morphology`, `MorphologyOps`, `FloodFill`, `ConnectedComponents`, `DistanceTransform`.
   - `GridSets.union/intersect/subtract/invert`.
+  - `GridOps.fill/copy/snapshot`, `VoxelTask`.
+  - Stepped `FloodFillQueue`, `ConnectedComponentsBFS`, `Chamfer345Distance`, `MorphologyBasic`;
+    flood-fill/component nested `Task` and `Workspace` types.
 - Storage and views:
   - `ArrayGrid3i`, `BitGrid3`, `ChunkedGrid3i`, `HashSparseGrid3i`.
   - `SubGrid3i`, `ClampedGrid3i`, `MaskedGrid3i`, `ConstGrid3i`, `SliceView2D`.
+  - `SparseGridView3i`, `BitGrid3iView`, `StoredGrid3i`.
 - Utilities:
   - `VoxelSpace`, `GridMath`, Ashcore `ServiceRegistry`.
 
@@ -243,7 +346,8 @@ Public types and members under `nsk.nu.ashgrid.api` are supported. Public constr
 the concrete classes in the feature map are also supported, including `SquareXZChunkScheme` at its
 existing `implementation.grid.indexing` path and the `VoxelSpace` helper. Private/package-private
 helpers are internal. Existing public signatures are retained; future moves/removals need a documented
-migration. This minor development version adds checked `GridMath.cellCount` and `floorToInt` helpers.
+migration. This minor development version adds checked `GridMath` helpers, backend views,
+storage lifecycle operations, bulk operations and stepped concrete-provider methods.
 Bug corrections can change results: see the migration notes in [docs/RELEASE.md](docs/RELEASE.md).
 
 Select providers by exact ID, not enumeration position. `ServiceRegistry` eagerly loads providers;
