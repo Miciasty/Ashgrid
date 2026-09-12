@@ -31,3 +31,16 @@ Source paths above are relative to `src/main/java/nsk/nu/ashgrid` for production
 ## Examples
 
 `CellBoundsExample`, `VoxelSpaceExample`, `ChunkMappingExample`, `SparseDefaultsExample`, `SparseWindowExample`, `BitViewExample`, `LiveViewsExample`, `GridCopyExample`, `GridSnapshotExample`, and `GridSetsExample`.
+
+## Interactive grid figures
+
+The teaching models in `wiki/assets/diagrams-grids.js` implement bounded JavaScript examples of the source contracts. They do not execute Ashgrid in the browser, benchmark backends, or estimate heap bytes. Every figure labels its XZ slice and Y interpretation. Native labelled controls expose all interactions without requiring pointer access to SVG cells.
+
+| Figure | Source checked | Defaults and verification expectations |
+| --- | --- | --- |
+| `chunk-map` | `SquareXZChunkScheme.chunkOfPoint`; floor division/modulus contract in `ChunkedGrid3i` and existing chunk tests | Cell X = −1, Z = 1, size = 4 gives chunk (−1, 0), local (3, 1). Changing size to 2 gives chunk (−1, 0), local (1, 1). Cell (0, 0) maps to local (0, 0). Visible cell addresses are local X,Z; outer axis labels are signed cell coordinates. |
+| `storage-backends` | `ArrayGrid3i` constructor; `BitGrid3` constructor/indexing; `HashSparseGrid3i.set`; `ChunkedGrid3i.set`, `has`, `allocatedCellCount`, `storedCellCount`, `pruneEmptyChunks` | Fresh 8 × 1 × 4 grids have 32 dense integer slots / 32 logical booleans. Four clustered cells create 4 hash entries and one 2 × 1 × 2 chunk (4 slots). Four scattered cells create 4 entries and 4 chunks (16 slots). Writing 0 removes hash entries but preserves allocated chunks. Pruning after clearing removes all those chunks. Full pattern has 32 foreground cells, 8 chunks, 32 slots. |
+| `grid-views` | `SparseGridView3i.get`/`set`; `GridOps.snapshot`; `BackendViewsTest`; `GridOpsTest` | Window origin (−1, 60, 0), shape 3 × 1 × 2. Initial values [1,2,3,4,5,6] are copied into an independent snapshot. Selected local (1,0,0) maps to source (0,60,0); both and snapshot initially equal 2. Writing default selected value 9 to source or window changes source and window to 9, snapshot remains 2. Writing snapshot changes only the copy; capture copies the current six window values. The source panel is a displayed finite region of an unbounded sparse backend. |
+| `set-operations` | `GridSets.union`, `intersect`, `subtract`, `invert`; `GridSetsTest` | Shape 6 × 1 × 4. A has six positive values (7), B six positive values (9), and their overlap contains two cells. Initial union has 10 ones, intersection 2, A minus B 4, invert A 18. Output is binary for predicate value > 0. Selected edit cell (3,0,1) begins in both sets. B edits are disabled during inversion because that operation has only input A. |
+
+The figures are inserted before their sections' longer code/table reference material. Source loops and contracts were inspected directly; root-task browser validation verifies rendering, control effects, and cleanup through the shared diagram loader.

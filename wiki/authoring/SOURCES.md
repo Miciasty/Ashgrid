@@ -9,6 +9,7 @@ Documentation version: Ashgrid 1.3.0 with Ashcore 1.2.0; Java release target 21.
 - The template's HTML, local renderer, styles, syntax assets, and authoring utilities were reused. Ashcore's content helper, build staging, and extra content validation were adapted. Public demo/palette pages were omitted.
 - This is library documentation for plugin developers. No commands, permissions, configuration, reload behavior, or server versions were invented.
 - The installed Maven POM and local Java source define the documented version. Search engines can return stale repository content; they are not the basis for current API claims.
+- The visual review follows the user's preference to illustrate mechanisms wherever that helps understanding. The site now contains 20 interactive figures, with finite inputs and explicit slice coordinates. The shared shell follows Ashcore's `Documentation`, `Examples`, `API reference`, and `Maven Central` controls.
 
 ## Source map
 

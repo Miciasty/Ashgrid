@@ -81,7 +81,7 @@
     const downloadLink = document.createElement('a');
     downloadLink.className = 'download-link whitespace-nowrap text-[11px] text-accent hover:underline';
     downloadLink.href = downloadUrl;
-    downloadLink.textContent = 'Download ↗';
+    downloadLink.textContent = 'Maven Central ↗';
     downloadLink.target = '_blank';
     downloadLink.rel = 'noopener noreferrer';
     $('.header-actions').prepend(downloadLink);
@@ -204,8 +204,8 @@
         if (link.dataset.page === id) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
       });
       all('.header-nav a').forEach(link => {
-        const isExample = ['coordinate-spaces','raycasting'].includes(id);
-        const active = link.dataset.top === (id === 'changelog' ? 'changelog' : isExample ? 'examples' : 'docs');
+        const top = id === 'quick-start' ? 'examples' : ['services','api-index','migration','troubleshooting'].includes(id) ? 'reference' : 'docs';
+        const active = link.dataset.top === top;
         if (active) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
       });
       const firstRender = currentPageId === null;

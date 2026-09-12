@@ -67,6 +67,8 @@ centerX=13.0, centerY=-1.0, centerZ=-1.0`)}
           id: 'chunk-mapping', title: 'Map cells to XZ chunks',
           html: `<p><code>SquareXZChunkScheme(size)</code> divides X and Z into square chunks of <code>size</code> cells. The size must be positive. Its point methods accept continuous <em>unit-grid</em> coordinates, even where a parameter is named <code>world</code>. If you use a scaled or shifted <code>VoxelSpace</code>, convert the position before calling the chunk scheme.</p>
           <p>For an integer cell coordinate, use floor division to find the chunk and floor modulus to find the local coordinate. With size <code>16</code>, cell <code>-1</code> belongs to chunk <code>-1</code> at local coordinate <code>15</code>. Ordinary integer division would put this cell in the wrong chunk.</p>
+          <p>Select cells on either side of zero below. Compare the signed chunk coordinate with the non-negative local coordinate, then change the chunk size to see the same cell move into a different partition.</p>
+          <div data-diagram="chunk-map"></div>
           ${code('java', 'ChunkMappingExample.java', `import nsk.nu.ashcore.api.geometry.AxisAlignedBox;
 import nsk.nu.ashcore.api.math.Vector3;
 import nsk.nu.ashgrid.api.grid.indexing.ChunkIndex2;
@@ -108,7 +110,8 @@ chunkWidth=2, chunkDepth=2, maxChunkIncluded=false`)}
       sections: [
         {
           id: 'choose-storage', title: 'Choose a backend',
-          html: table(['Backend', 'Construction and initial values', 'Use it for'], [
+          html: `<p>Four occupied cells can share one chunk or require four separate chunks. Compare the clustered and scattered examples below, then write zeros and prune empty chunks to separate cell values from allocated storage.</p>
+          <div data-diagram="storage-backends"></div>` + table(['Backend', 'Construction and initial values', 'Use it for'], [
             ['<code>ArrayGrid3i(width, height, depth)</code>', 'Dense integer storage, initially zero; implements <code>BoundedGrid3i</code>.', 'A fixed region with an integer value for every cell.'],
             ['<code>BitGrid3(width, height, depth)</code>', 'Boolean storage, initially false; exposes boolean <code>get</code> and <code>set</code>.', 'Occupancy values. Use <code>BitGrid3iView</code> for algorithms that read or write integers.'],
             ['<code>HashSparseGrid3i(defaultValue)</code>', 'Stores individual non-default values at signed integer XYZ coordinates.', 'Scattered cells with large gaps.'],
@@ -173,6 +176,8 @@ hashHas=false, chunkHas=true, pruned=1`)}
         {
           id: 'sparse-window', title: 'Expose a bounded sparse window',
           html: `<p><code>SparseGridView3i</code> gives a sparse backend a finite local coordinate range. Its local cell <code>(0, 0, 0)</code> maps to the supplied source origin. Missing source cells are included in that range and read as the sparse default. Constructing a window allocates no source cells.</p>
+          <p>Write a new value to the source or through its window and follow the same cell across both coordinate systems. The snapshot keeps its captured value until you edit it or take a new copy.</p>
+          <div data-diagram="grid-views"></div>
           ${code('java', 'SparseWindowExample.java', `import nsk.nu.ashgrid.api.grid.bounds.IntBox3;
 import nsk.nu.ashgrid.api.raster.view.SparseGridView3i;
 import nsk.nu.ashgrid.implementation.raster.sparse.HashSparseGrid3i;
@@ -337,6 +342,8 @@ public class GridSnapshotExample {
         {
           id: 'set-algebra', title: 'Combine foreground cells',
           html: `<p><code>GridSets</code> applies one <code>IntPredicate</code> to input values and writes <code>1</code> for foreground or <code>0</code> for background. Original labels are not preserved. Choose the predicate to match your data, such as <code>value &gt; 0</code> for positive labels.</p>
+          <p>Compare the two input shapes with their result below. Switch the operation or toggle a selected cell to see why it is included. The input labels differ, but the foreground test reduces both to the same yes-or-no decision.</p>
+          <div data-diagram="set-operations"></div>
           ${table(['Method', 'Output is 1 when'], [
             ['<code>union(a, b, predicate, out)</code>', 'Either input is foreground.'],
             ['<code>intersect(a, b, predicate, out)</code>', 'Both inputs are foreground.'],

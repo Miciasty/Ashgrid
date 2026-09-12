@@ -4,10 +4,16 @@
 @import "./syntax-java.css";
 @import "./syntax-code.css";
 @import "./diagrams.css";
+@import "./visuals.css";
 
 @source "../index.html";
 @source "../assets/app.js";
 @source "../assets/diagrams.js";
+@source "../assets/visuals.js";
+@source "../assets/diagrams-grids.js";
+@source "../assets/diagrams-queries.js";
+@source "../assets/diagrams-operations.js";
+@source "../assets/diagrams-overview.js";
 @source "../content";
 
 @theme inline {

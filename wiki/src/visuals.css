@@ -1,0 +1,39 @@
+/* Shared visual explanations retain the WIKI palette and readable mobile controls. */
+@layer components {
+  .wiki-visual { @apply mx-0 my-7 overflow-hidden rounded-xl border border-line bg-surface font-sans text-[13px] leading-[1.6] text-foreground print:break-inside-avoid; }
+  .visual-heading { @apply flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-[18px] py-3.5; }
+  .visual-heading strong { @apply text-[13px] font-semibold; }
+  .visual-heading > span { @apply text-[11px] text-muted; }
+  .visual-body { @apply p-[18px] max-[680px]:p-3.5; }
+  .visual-controls { @apply flex flex-wrap items-end gap-3 border-b border-line px-[18px] py-3.5 max-[680px]:px-3.5 print:hidden; }
+  .visual-controls label { @apply flex min-w-0 flex-col gap-1 text-[12px] text-muted; }
+  .visual-controls input[type="range"] { @apply max-w-full accent-accent; }
+  .visual-controls input[type="number"] { @apply w-20 rounded-md border border-line bg-page px-2 py-1.5 text-foreground; }
+  .visual-button { @apply cursor-pointer rounded-md border border-line bg-page px-3 py-[7px] text-[12px] leading-[1.4] text-foreground transition-colors hover:border-accent hover:bg-accent-soft disabled:cursor-default disabled:opacity-40; }
+  .visual-button[aria-pressed="true"] { @apply border-accent bg-accent-soft text-accent; }
+  .visual-select { @apply max-w-full rounded-md border border-line bg-page px-2 py-[7px] text-[12px] text-foreground; }
+  .wiki-visual select:focus-visible, .wiki-visual button:focus-visible, .wiki-visual input:focus-visible, .wiki-visual a:focus-visible { @apply outline-2 outline-offset-4 outline-accent; }
+  .visual-panes { @apply grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-4; }
+  .visual-panel { @apply min-w-0 rounded-lg border border-line bg-page p-3; }
+  .visual-panel h3, .visual-panel h4 { @apply mt-0 mb-2 text-[13px] font-semibold; }
+  .visual-panel p { @apply my-2 text-[12px] leading-[1.6] text-muted; }
+  .visual-output { @apply my-3 block rounded-md border border-line bg-page p-3 font-mono text-[12px] leading-[1.7] text-foreground; overflow-wrap: anywhere; }
+  .visual-legend { @apply my-3 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-[11px] text-muted; }
+  .visual-caption { @apply border-t border-line px-[18px] py-3.5 text-[12px] leading-[1.7] text-muted max-[680px]:px-3.5; }
+  .visual-matrix { @apply mx-auto block h-auto w-full max-w-[420px]; }
+  .visual-matrix .visual-axis { fill: var(--muted); font: 10px var(--font); }
+  .visual-cell rect { fill: var(--diagram-muted-surface); stroke: var(--diagram-grid); stroke-width: 1; }
+  .visual-cell text { fill: var(--text); font: 12px var(--mono); }
+  .visual-cell-selected rect { fill: var(--accent-soft); stroke: var(--accent); }
+  .visual-cell-blocked rect { fill: var(--diagram-muted-surface); stroke: var(--muted); stroke-width: 2; }
+  .visual-cell-frontier rect { fill: var(--accent-soft); stroke: var(--diagram-x); stroke-width: 2; stroke-dasharray: 4 2; }
+  .visual-cell-a rect { fill: var(--accent-soft); stroke: var(--diagram-y); stroke-width: 2; }
+  .visual-cell-b rect { fill: var(--accent-soft); stroke: var(--diagram-z); stroke-width: 2; }
+  .visual-flow { @apply flex flex-wrap items-stretch gap-3; }
+  .visual-flow > * { @apply flex-1 basis-[170px]; }
+  .visual-flow-node { @apply rounded-lg border border-line bg-page p-4; }
+  .visual-flow-node strong { @apply block text-[13px] font-semibold text-foreground; }
+  .visual-flow-node p { @apply mt-2 mb-0 text-[12px] leading-[1.6] text-muted; }
+  .visual-flow-node[data-active="true"] { @apply border-accent bg-accent-soft; }
+  .visual-step-number { @apply mb-2 block font-mono text-[11px] text-accent; }
+}

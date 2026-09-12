@@ -15,6 +15,7 @@
         id: 'fill-region',
         title: 'Fill a region bounded by a wall',
         html: `<p>This example stores a two-row region in a <code>5 × 2 × 1</code> grid. Value <code>9</code> forms a wall at <code>x = 2</code>. The fill visits zero-valued cells reachable from <code>(0, 0, 0)</code> and changes each visited cell to <code>7</code>.</p>
+          <div data-diagram="flood-fill"></div>
           ${code('java', 'FloodFillExample.java', `import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
 import nsk.nu.ashgrid.implementation.voxel.ops.floodfill.FloodFillQueue;
 
@@ -73,7 +74,7 @@ public class FloodFillExample {
       {
         id: 'component-neighborhoods',
         title: 'Choose what connects two cells',
-        html: `${table(['Neighborhood', 'Connections', 'Number of neighbors'], [
+        html: `<div data-diagram="components"></div>${table(['Neighborhood', 'Connections', 'Number of neighbors'], [
           ['<code>N6</code>', 'Shared faces', '6'],
           ['<code>N18</code>', 'Shared faces or edges', '18'],
           ['<code>N26</code>', 'Shared faces, edges, or corners', '26']
@@ -139,6 +140,7 @@ N26: components=1, labels=1,1,1`)}
         title: 'Expand and shrink a region',
         html: `<p><code>dilate</code> writes <code>1</code> when the source cell or any chosen neighbor is foreground. <code>erode</code> writes <code>1</code> only when the source cell and every chosen neighbor are foreground. All other output cells receive <code>0</code>.</p>
           <p>Choose <code>Morphology.Neighborhood.N6</code>, <code>N18</code>, or <code>N26</code> for faces, faces plus edges, or all adjacent cells. A single interior seed therefore expands to 7, 19, or 27 cells, including itself.</p>
+          <div data-diagram="morphology"></div>
           ${code('java', 'MorphologyExample.java', `import nsk.nu.ashgrid.api.voxel.ops.morphology.Morphology;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;
 import nsk.nu.ashgrid.implementation.voxel.ops.morphology.MorphologyBasic;
@@ -191,6 +193,7 @@ public class MorphologyExample {
         id: 'chamfer-distance',
         title: 'Read distance in raw chamfer units',
         html: `<p><code>Chamfer345Distance</code> returns the minimum cost of a path to a foreground cell. A face step costs <code>3</code>, an edge step <code>4</code>, and a corner step <code>5</code>. Foreground itself has distance <code>0</code>.</p>
+          <div data-diagram="distance-map"></div>
           ${code('java', 'ChamferDistanceExample.java', `import nsk.nu.ashgrid.implementation.voxel.ops.distance.Chamfer345Distance;
 
 public class ChamferDistanceExample {
@@ -237,6 +240,8 @@ emptyMaskDistance=Infinity`)}
         id: 'create-task',
         title: 'Use a concrete implementation to begin work',
         html: `<p>The operation interfaces expose synchronous methods for use through SPI. Their <code>begin</code> methods belong to the bundled concrete implementations. Construct the required implementation when your application needs its stepped API.</p>
+          <p>The static <code>GridOps.beginFill</code> helper also returns a <code>VoxelTask</code>. Its one-write-per-unit rule makes the shared stepping and cancellation contract easy to inspect:</p>
+          <div data-diagram="work-budget"></div>
           ${table(['Implementation', 'Task factory', 'Result'], [
             ['<code>FloodFillQueue</code>', '<code>begin(grid, sx, sy, sz, predicate, callback[, workspace])</code>', '<code>FloodFillQueue.Task</code> with <code>count()</code>'],
             ['<code>ConnectedComponentsBFS</code>', '<code>begin(src, predicate, labels, neighborhood[, workspace])</code>', '<code>ConnectedComponentsBFS.Task</code> with <code>count()</code>'],
@@ -298,6 +303,7 @@ status=CANCELLED, visited=1, first=7, second=0`)}
         title: 'Budget work units, not elapsed time',
         html: `<p><code>step(maxWork)</code> returns the number of units performed, from zero through <code>maxWork</code>. <code>step(0)</code> performs no work; a negative budget throws <code>IllegalArgumentException</code>. <code>workDone()</code> accumulates completed units. A valid step on a terminal task returns zero.</p>
           ${table(['Operation', 'One work unit', 'Completed work'], [
+            ['<code>GridOps</code> fill', 'Write one cell in the selected region.', 'One unit per region cell.'],
             ['Flood fill', 'Dequeue one candidate and, if accepted, check at most six neighbors.', 'One unit per dequeued candidate, including rejected candidates.'],
             ['Components', 'Clear one cell, scan one cell, or dequeue one foreground cell and check its neighbors.', '<code>2 × volume + foreground cell count</code> units.'],
             ['Morphology', 'Write one output cell after checking its source and at most 26 neighbors.', '<code>volume</code> units per pass.'],

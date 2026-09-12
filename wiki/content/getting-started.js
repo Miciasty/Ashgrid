@@ -8,7 +8,7 @@
       intro: '<p>Ashgrid provides integer grids, cell and chunk indexing, voxel queries, and raster operations. Use it inside a Minecraft plugin or another Java application that works with three-dimensional cell data.</p>',
       sections: [
         {id: 'start-building', title: 'Start with a working grid', html: '<p>This WIKI documents <strong>Ashgrid 1.3.0</strong>. It requires <strong>Java 21 or newer</strong> and resolves <strong>Ashcore 1.2.0</strong> as a dependency.</p>'+`<div class="link-cards my-[22px] grid grid-cols-2 gap-[13px] max-[680px]:grid-cols-1">${card('installation','01 · SETUP','Add Ashgrid','Configure Maven or Gradle and package the library with your plugin.')}${card('quick-start','02 · FIRST RESULT','Select a voxel','Create a small grid and find the first occupied cell on a ray.')}${card('storage','03 · DATA','Choose storage','Compare dense arrays, bits, sparse maps, and chunked storage.')}${card('flood-fill','04 · EDITING','Fill a region','Visit connected cells and control how their values change.')}</div>`},
-        {id: 'choose-an-operation', title: 'Choose an operation', html: table(['Your task','Read','What you get'],[
+        {id: 'choose-an-operation', title: 'Choose an operation', html: '<div data-diagram="library-map"></div>'+table(['Your task','Read','What you get'],[
           ['Map a position or split it into a chunk and local cell','<a href="#/coordinates">Coordinates and bounds</a>','Integer indices with floor-based negative-coordinate behavior.'],
           ['Find the first occupied cell along a direction','<a href="#/raycasting">Raycast and line of sight</a>','A cell coordinate and its entry parameter, or no hit.'],
           ['Visit a line, sphere, or box','<a href="#/lines-regions">Lines and regions</a>','Cells selected by the chosen rasterization or shape rule.'],
@@ -33,7 +33,7 @@
       id: 'installation', category: 'Getting started', title: 'Add Ashgrid to your project', navTitle: 'Installation', kind: 'guide', readingTime: 5,
       description: 'Add the Java dependency and keep its classes and service providers available at runtime.',
       sections: [
-        {id: 'requirements', title: 'Requirements', html: table(['Requirement','Value'],[
+        {id: 'requirements', title: 'Requirements', html: '<div data-diagram="dependency-map"></div>'+table(['Requirement','Value'],[
           ['Compile and run','JDK 21 or newer.'],['Artifact','<code>dev.nasaka.blackframe:ashgrid:1.3.0</code>'],['Repository','Maven Central.'],['Transitive dependency','<code>dev.nasaka.blackframe:ashcore:1.2.0</code>'],['Source build','Maven 3.9+ and JDK 21+.']
         ])+'<p>Ashgrid has no dependency on Bukkit or Paper. Choose server compatibility in the plugin that embeds it. Do not force an older Ashcore version onto the runtime classpath.</p>'},
         {id: 'maven', title: 'Maven', html: '<p>Add this dependency to your existing <code>&lt;dependencies&gt;</code> element. Maven Central needs no additional repository declaration.</p>'+code('xml','pom.xml — dependency',`<dependency>
@@ -126,7 +126,7 @@ java {
     </plugins>
   </build>
 </project>`)},
-        {id: 'create-grid', title: 'Create the grid and ray', html: '<p>Save this class as <code>src/main/java/AshgridQuickStart.java</code>. The grid contains eight cells along X. Only cell (3, 1, 0) is occupied.</p>'+code('java','AshgridQuickStart.java',`import nsk.nu.ashcore.api.geometry.Ray;
+        {id: 'create-grid', title: 'Create the grid and ray', html: '<div data-diagram="first-hit"></div><p>Save this class as <code>src/main/java/AshgridQuickStart.java</code>. The grid contains eight cells along X. Only cell (3, 1, 0) is occupied.</p>'+code('java','AshgridQuickStart.java',`import nsk.nu.ashcore.api.geometry.Ray;
 import nsk.nu.ashcore.api.math.Vector3;
 import nsk.nu.ashcore.api.spi.ServiceRegistry;
 import nsk.nu.ashgrid.api.voxel.query.Raycast;

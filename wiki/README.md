@@ -61,4 +61,12 @@ Creating these local files does not enable Pages or publish a deployment. Reposi
 
 Use `#/page-id` and `#/page-id?section=section-id` for links. Assets use relative paths so the site works under `/Ashgrid/`. Update the version in `content/site.js` with `pom.xml`; `npm run check` rejects mismatches, missing links, and demonstration content.
 
+## Edit visual explanations
+
+The articles contain 20 interactive figures. Put each figure beside the concept it explains, with its coordinate system, displayed slice, input values, and limits stated in the caption. Prefer controls that expose a useful difference: a boundary crossing, a changed neighborhood, a live write, or a work step. Keep results readable as text as well as color.
+
+`assets/visuals.js` supplies the shared frame, SVG matrix, and event cleanup helpers; `src/visuals.css` defines their presentation. The subject modules `assets/diagrams-grids.js`, `diagrams-queries.js`, `diagrams-operations.js`, and `diagrams-overview.js` register factories in `window.WikiDiagramFactories`. `assets/diagrams.js` mounts them together with the original coordinate and traversal figures and disposes their listeners when the article changes. The figures run local JavaScript models of finite examples; they do not execute Java or connect to Minecraft.
+
+Add a figure with `<div data-diagram="factory-id"></div>` in an article. Each factory accepts its host element and returns a cleanup function. Register new modules in `index.html` before `assets/app.js` and in the Tailwind scan sources in `src/input.css`. `npm run check` rejects unknown figure IDs. After a change, rebuild, exercise its controls in the browser, and compare algorithm outputs with the Java source. Use numeric tick offsets when the displayed region does not start at zero.
+
 The evidence and authoring decisions are recorded in [authoring/SOURCES.md](authoring/SOURCES.md); validation results are in [authoring/VALIDATION.md](authoring/VALIDATION.md). Keep those notes out of the published site.

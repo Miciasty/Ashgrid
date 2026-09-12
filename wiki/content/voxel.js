@@ -55,6 +55,8 @@ cell=(2,0,0), enter=1.5, exit=2.5`)}
         id: 'faces-edges-and-corners',
         title: 'Faces, edges, and corners',
         html: `<p>The <code>dda</code> provider starts at <code>floor(origin)</code>. At an exact tie, it steps X, then Y, then Z. Intermediate callbacks can have <code>tEnter == tExit</code>. These callbacks report a boundary contact without positive travel through the cell.</p>
+          <p>Step through the positive diagonal below. The three panels are slices of the same voxel grid: watch X and Y boundary contacts appear before the Z step reaches the next diagonal cell.</p>
+          <div data-diagram="dda-ties"></div>
           <p>A negative direction from an integer face first emits the floor-selected starting cell with a zero-length interval. In this example, the ray starts at the corner <code>(0,0,0)</code> and moves toward negative X, Y, and Z. The first three callbacks have zero length.</p>
           ${code('java', 'TraversalTiesExample.java', `import java.util.Locale;
 import nsk.nu.ashcore.api.geometry.Ray;
@@ -134,6 +136,8 @@ cell=(0,0,0), enter=2.0, exit=3.0`)}
         id: 'find-the-first-occupied-cell',
         title: 'Find the first occupied cell',
         html: `<p>Construct <code>Raycast</code> with a traverser, then call <code>first(ray, tMax, occupancy)</code>. The occupancy predicate returns <code>true</code> for a cell you consider solid. The query stops at the first matching callback and returns <code>Raycast.Hit</code>. It returns <code>null</code> when no callback matches.</p>
+          <p>Toggle occupied cells to compare raycast with line of sight. Start with the occupied origin: raycast reports a hit there, while line of sight skips that first callback. Move the endpoint from a face into a cell to see when the endpoint cell is checked.</p>
+          <div data-diagram="query-comparison"></div>
           <p>This example treats cell <code>(2,0,0)</code> as occupied. The ray reaches that cell after traveling <code>1.5</code> cells. A second query has no hit within its distance limit. A third query demonstrates that an occupied starting cell counts as a hit.</p>
           ${code('java', 'RaycastExample.java', `import java.util.Locale;
 import nsk.nu.ashcore.api.geometry.Ray;
@@ -230,6 +234,8 @@ equalPoints=true`)}
         id: 'choose-a-line',
         title: 'Choose a line',
         html: `<p>Choose the line algorithm from the contact rule your operation needs. A thin line is useful for a one-cell path. Supercover includes every cell touched by the continuous segment between the centers of the endpoint cells.</p>
+          <p>Compare the highlighted cells, then switch from an XY cut to a full three-axis corner. The visit numbers show how much a thin line omits when every boundary contact matters.</p>
+          <div data-diagram="line-coverage"></div>
           ${table(['API / provider ID', 'Cells visited', 'Boundary and order rules'], [
             ['<code>Line3D</code> / <code>bresenham3d</code>', 'A thin discrete line, including both endpoint cells.', 'Dominant-axis ties prefer X, then Y, then Z. Reversing endpoints may select different tie cells.'],
             ['<code>Line3DSupercover</code> / <code>supercover3d</code>', 'Every closed unit cell touched by the segment between endpoint cell centers, including edge and corner contacts.', 'Each cell appears once. Reversal preserves the set, but not necessarily the reverse order.'],
@@ -274,6 +280,8 @@ supercover=(0,0,0) (1,0,0) (0,1,0) (1,1,0) (0,0,1) (1,0,1) (0,1,1) (1,1,1)`)}
         id: 'enumerate-regions',
         title: 'Enumerate regions',
         html: `<p>Region APIs use two different selection rules. A continuous AABB selects unit voxels that intersect its half-open volume. Spheres and cylinders select cells by their center. Use the rule that matches your operation; a cell can intersect a sphere while its center remains outside.</p>
+          <p>Switch the region below to compare the exact shapes used in the Java example. Each panel fixes Z and shows X and Y cell coordinates, so cells in different layers remain distinct.</p>
+          <div data-diagram="region-selection"></div>
           ${table(['Operation', 'Selection', 'Callback order'], [
             ['<code>AABBVoxelIterator.forEachCell(box, consumer)</code>', 'Cells intersecting a finite half-open AABB. Per-axis indices run from <code>floor(min)</code> through <code>floor(nextDown(max))</code>, inclusive. Empty boxes emit nothing.', 'Z outermost, then Y, with X fastest.'],
             ['<code>RegionIterators.forEachCellBox(x0,y0,z0,x1,y1,z1,consumer)</code>', 'Integer cell ranges including both ends. A reversed axis makes the region empty.', 'Z, Y, X; X fastest.'],
@@ -319,6 +327,8 @@ zeroRadiusAtCorner=0`)}
         id: 'select-neighbors',
         title: 'Select neighbors',
         html: `<p><code>Neighborhood3D</code> provides integer offsets around a cell. Add each offset to the cell coordinates to obtain a neighbor. The arrays do not include the center cell.</p>
+          <p>Choose a neighborhood to reveal its face, edge, and corner contacts across all three layers. The center is shown for orientation and is never counted as a neighbor.</p>
+          <div data-diagram="neighborhoods"></div>
           ${table(['Array', 'Neighbors', 'Contacts included'], [
             ['<code>N6</code>', '6', 'Faces only. Order: +X, −X, +Y, −Y, +Z, −Z.'],
             ['<code>N18</code>', '18', 'Faces and edges; excludes the eight corners.'],

@@ -12,6 +12,12 @@ const contentFiles = [...shell.matchAll(/<script src="\.\/(content\/[^" ]+)"/g)]
 for (const file of contentFiles) {
   vm.runInContext(await readFile(path.join(root,file),'utf8'),context,{filename:file,timeout:1000});
 }
+// Load only the diagram definitions; they access the DOM when mounted in a browser.
+const visualFiles = [...shell.matchAll(/<script src="\.\/(assets\/(?:visuals|diagrams(?:-[a-z]+)?)\.js)"/g)].map(match => match[1]);
+for (const file of visualFiles) {
+  vm.runInContext(await readFile(path.join(root,file),'utf8'),context,{filename:file,timeout:1000});
+}
+const diagramIds = new Set(['coordinates','raycast',...Object.keys(context.window.WikiDiagramFactories || {})]);
 const config = context.window.WIKI_CONFIG;
 const pages = context.window.WIKI_PAGES;
 if (!config || !Array.isArray(pages) || !pages.length) throw new Error('Expected WIKI_CONFIG and a non-empty WIKI_PAGES array.');
@@ -52,6 +58,7 @@ for (const [name,url] of Object.entries(config.links || {})) {
   if (url && !/^https?:\/\//i.test(url)) errors.push(`links.${name} must be an absolute HTTP(S) URL or an empty string.`);
 }
 let linkCount=0;
+let diagramCount=0;
 for (const page of pages) {
   const html = [page.intro || '', ...(page.sections || []).map(s=>s.html)].join('\n');
   if (/Shelter|fictional demonstration|\{\{[^}]+\}\}/i.test(html)) errors.push(`${page.id}: unreplaced demonstration content.`);
@@ -64,7 +71,8 @@ for (const page of pages) {
     else if(section&&!sections.get(id)?.has(section)) errors.push(`${page.id}: link to unknown section ${id}/${section}`);
   }
   for (const match of html.matchAll(/data-diagram=["']([^"']+)["']/g)) {
-    if(!['coordinates','raycast'].includes(match[1])) errors.push(`${page.id}: unknown diagram ${match[1]}`);
+    diagramCount++;
+    if(!diagramIds.has(match[1])) errors.push(`${page.id}: unknown diagram ${match[1]}`);
   }
   for (const match of html.matchAll(/(?:src|poster)=["']([^"']+)["']/g)) {
     if (/^(https?:|data:)/.test(match[1])) continue;
@@ -79,4 +87,4 @@ for (const match of shell.matchAll(/(?:src|href)="(\.\/[^"#]+)"/g)) {
   try { await access(path.join(root,match[1])); } catch { errors.push(`Missing shell asset: ${match[1]}`); }
 }
 if(errors.length) { console.error(errors.map(error=>`- ${error}`).join('\n')); process.exitCode=1; }
-else console.log(`Checked ${pages.length} pages, ${[...sections.values()].reduce((sum,set)=>sum+set.size,0)} sections, ${linkCount} content links, navigation, and local assets.`);
+else console.log(`Checked ${pages.length} pages, ${[...sections.values()].reduce((sum,set)=>sum+set.size,0)} sections, ${linkCount} content links, ${diagramCount} figures, navigation, and local assets.`);
