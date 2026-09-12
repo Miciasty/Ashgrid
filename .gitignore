@@ -1,10 +1,20 @@
 target/
 .verification/
+/integration/
+/scripts/
+/ISSUES
+/ISSUES.md
+/VERIFICATION
+/VERIFICATION.md
+/BENCHMARK.md
+/BENCHMARKS.md
+/docs/RELEASE.md
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
 ### IntelliJ IDEA ###
+.idea/
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
