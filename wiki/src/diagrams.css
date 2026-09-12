@@ -1,0 +1,71 @@
+/* SVG palette and geometry stay here. Layout, spacing and control typography
+   use Tailwind utilities in assets/diagrams.js. */
+@layer components {
+  .diagram-component {
+    --diagram-x: #f08086;
+    --diagram-y: #7dd8a5;
+    --diagram-z: #86acff;
+    --diagram-grid: #29292f;
+    --diagram-plot: #121216;
+    --diagram-cube: rgba(38, 187, 255, .08);
+    --diagram-cube-edge: rgba(108, 191, 229, .5);
+    --diagram-muted-surface: #1c1c24;
+  }
+
+  html[data-theme="light"] .diagram-component {
+    --diagram-x: #b8474f;
+    --diagram-y: #227647;
+    --diagram-z: #366ac0;
+    --diagram-grid: #dfe2e8;
+    --diagram-plot: #f8f9fb;
+    --diagram-cube: rgba(14, 139, 200, .065);
+    --diagram-cube-edge: rgba(20, 128, 177, .48);
+    --diagram-muted-surface: #eef0f5;
+  }
+
+  .diagram-component button:focus-visible,
+  .diagram-component input:focus-visible {
+    @apply outline-2 outline-offset-4 outline-accent;
+  }
+
+  .diagram-hit-status[data-hit="true"] { @apply text-accent; }
+
+  .diagram-scene text { font-family: inherit; }
+  .diagram-grid { fill: none; stroke: var(--diagram-grid); stroke-width: 1; }
+  .diagram-axis { stroke-width: 1.6; fill: none; }
+  .diagram-axis-label { font-size: 15px; font-weight: 600; }
+  .diagram-secondary-frame { opacity: .57; }
+  .diagram-local-axes .diagram-axis { stroke-dasharray: 5 3; }
+  .diagram-stroke-x { stroke: var(--diagram-x); }
+  .diagram-stroke-y { stroke: var(--diagram-y); }
+  .diagram-stroke-z { stroke: var(--diagram-z); }
+  .diagram-fill-x { fill: var(--diagram-x); color: var(--diagram-x); }
+  .diagram-fill-y { fill: var(--diagram-y); color: var(--diagram-y); }
+  .diagram-fill-z { fill: var(--diagram-z); color: var(--diagram-z); }
+  .diagram-fill-ray { fill: var(--accent); }
+
+  .diagram-origin-label,
+  .diagram-tick-label,
+  .diagram-obstacle-caption,
+  .diagram-endpoint-label { fill: var(--muted); font-size: 12px; }
+
+  .diagram-origin-label,
+  .diagram-axis-label { paint-order: stroke; stroke: var(--diagram-plot); stroke-width: 3px; stroke-linejoin: round; }
+  .diagram-world-origin { fill: var(--text); stroke: var(--diagram-plot); stroke-width: 2; }
+  .diagram-local-origin { fill: var(--diagram-plot); stroke: var(--accent); stroke-width: 2; }
+  .diagram-local-box { fill: var(--diagram-cube); stroke: var(--diagram-cube-edge); stroke-width: 1; stroke-linejoin: round; }
+  .diagram-projections { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; opacity: .65; }
+  .diagram-ground-point { fill: var(--diagram-plot); stroke-dasharray: none; }
+  .diagram-point-halo { fill: var(--accent); opacity: .13; }
+  .diagram-point { fill: var(--accent); stroke: var(--diagram-plot); stroke-width: 2; }
+
+  .diagram-point-label,
+  .diagram-hit-label { fill: var(--text); font-size: 13px; font-weight: 600; paint-order: stroke; stroke: var(--diagram-plot); stroke-width: 4px; stroke-linejoin: round; }
+
+  .diagram-obstacle { fill: var(--diagram-muted-surface); stroke: var(--muted); stroke-width: 1; }
+  .diagram-obstacle-hit { fill: var(--diagram-cube); stroke: var(--accent); }
+  .diagram-scene .diagram-obstacle-label { @apply font-mono; fill: var(--text); font-size: 16px; font-weight: 500; }
+  .diagram-ray { stroke: var(--accent); stroke-width: 2.4; }
+  .diagram-ray-remainder { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 6; opacity: .55; }
+  .diagram-ray-endpoint { fill: var(--diagram-plot); stroke: var(--muted); stroke-width: 1.2; }
+}

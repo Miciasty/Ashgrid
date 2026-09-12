@@ -1,4 +1,6 @@
 target/
+wiki/node_modules/
+wiki/_site/
 .verification/
 /integration/
 /scripts/

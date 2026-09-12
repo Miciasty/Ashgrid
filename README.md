@@ -5,6 +5,10 @@ It provides cell/chunk indexing, dense and sparse storage, voxel queries and ras
 
 Version **1.3.0** is available from [Maven Central](https://central.sonatype.com/artifact/dev.nasaka.blackframe/ashgrid/1.3.0).
 
+The [WIKI](wiki/README.md) provides installation steps, runnable Java examples, storage and query guides,
+and an API index. Open `wiki/index.html` locally. The included GitHub Pages workflow publishes it
+after the changes reach `master` and Pages is configured to use GitHub Actions.
+
 > [!NOTE]
 > Ashgrid focuses on voxel/grid primitives.
 >
