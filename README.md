@@ -1,8 +1,8 @@
-﻿# Ashgrid
+# Ashgrid
 
 Low-level deterministic Java library for 3D voxel/grid indexing, traversal, raster operations, and spatial queries.
 
-This checkout is **1.3.0-SNAPSHOT**, an unpublished development version. Release evidence and
+This checkout uses release version **1.3.0**. Release evidence and
 compatibility changes are recorded in [docs/RELEASE.md](docs/RELEASE.md).
 
 > [!NOTE]
@@ -234,7 +234,7 @@ snapshot locally with `mvn -B clean install` before using it in another local pr
 <dependency>
   <groupId>dev.nasaka.blackframe</groupId>
   <artifactId>ashgrid</artifactId>
-  <version>1.3.0-SNAPSHOT</version>
+  <version>1.3.0</version>
 </dependency>
 ```
 
@@ -244,13 +244,13 @@ Ashgrid depends on:
 <dependency>
   <groupId>dev.nasaka.blackframe</groupId>
   <artifactId>ashcore</artifactId>
-  <version>1.0.1</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
-Ashcore 1.0.1 remains the default dependency for compatibility. Integration with the corrected
-Ashcore 1.1.0-SNAPSHOT is verified separately using `-Dashcore.version=1.1.0-SNAPSHOT` and an isolated
-artifact repository; editing a neighboring checkout does not replace Maven's resolved JAR.
+Ashcore **1.2.0** is the declared dependency, matching Ashspace, Ashtrace and Ashnav.
+Build and install the matching Ashcore artifact before building Ashgrid locally;
+editing a neighboring checkout does not replace Maven's resolved JAR.
 
 Minimal raycast example:
 
@@ -346,7 +346,7 @@ Public types and members under `nsk.nu.ashgrid.api` are supported. Public constr
 the concrete classes in the feature map are also supported, including `SquareXZChunkScheme` at its
 existing `implementation.grid.indexing` path and the `VoxelSpace` helper. Private/package-private
 helpers are internal. Existing public signatures are retained; future moves/removals need a documented
-migration. This minor development version adds checked `GridMath` helpers, backend views,
+migration. This minor release adds checked `GridMath` helpers, backend views,
 storage lifecycle operations, bulk operations and stepped concrete-provider methods.
 Bug corrections can change results: see the migration notes in [docs/RELEASE.md](docs/RELEASE.md).
 
