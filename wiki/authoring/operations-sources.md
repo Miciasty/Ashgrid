@@ -49,7 +49,7 @@ Zakres: Ashgrid 1.3.0, kod w tym repozytorium. Publiczny tekst jest po angielsku
 
 `content/operations.js` zawiera pięć pełnych klas Java z `main`: `FloodFillExample`, `ComponentsExample`, `MorphologyExample`, `ChamferDistanceExample`, `SteppedTasksExample`. Każdej towarzyszy dokładny blok Expected output. Wszystkie dane wejściowe przykładów powstają w pamięci; brak zależności od serwera Minecraft.
 
-## Wizualizacje operacji — 2026-09-12
+## Wizualizacje operacji — stan początkowy 2026-09-12
 
 Implementacja: `assets/diagrams-operations.js`. Pięć interaktywnych figur to małe modele JavaScript objaśniające powyższy kod Java, nie powiązanie strony z biblioteką ani pomiar jej wydajności. Nie uruchamiają świata Minecraft, schedulera ani kodu użytkownika. Kontrolki są natywnymi, podpisanymi przyciskami i polami wyboru, bez automatycznej animacji. Wartości, etykiety oraz opisy stanu uzupełniają kolor.
 
@@ -62,3 +62,11 @@ Implementacja: `assets/diagrams-operations.js`. Pięć interaktywnych figur to m
 | `work-budget` | Model `GridOps.beginFill` zapisuje 7 do 5 × 3 × 1 komórek. Nie utożsamia jednostki z czasem i nie symuluje wyjątków/FAILED. Start nowej ilustracji zeruje jej siatkę; samo cancel niczego nie cofa. | Budget 3, RUNNING, work 0. Jeden krok: 3 zapisane, returned 3. Cancel: CANCELLED i te same 3 zapisy; kolejny step zwraca 0. Budget 0 niczego nie zmienia. Pięć kroków z budżetem 3: COMPLETED i 15 zapisów. |
 
 Walidacja modeli wykonana 2026-09-12: tymczasowy harness Node uruchomił fabryki, zdarzenia kontrolek i cleanup listenerów; sprawdził kolejkę, etykiety, preset pustej maski, edycję foreground, zerowy budżet, anulowanie i terminalne wywołanie step. Osobny program Java uruchomiony przez JDK 25 z lokalnymi klasami Ashgrid i Ashcore 1.2.0 potwierdził dokładną zgodność 6804 wartości morfologii (12 × 567) i 49 odległości modelu dwóch źródeł. Pliki harnessu są tymczasowe, nie są treścią strony. Kontrola wyglądu i pełny build WIKI należą do walidacji integracyjnej prowadzonej przez proces główny.
+
+## Aktualizacja wizualizacji — 2026-09-13
+
+Komponenty i morfologia mają perspektywiczne sceny 3D oraz przełącznik na przekroje XY. Sposób cieniowania brył, siatka podłoża, wskaźnik osi i sterowanie kamerą odpowiadają scenom Ashspace. Przeciąganie i strzałki obracają kamerę; kółko i przyciski zmieniają zoom. Reset view przywraca kamerę, a Reset example przywraca również dane wejściowe. Oba panele morfologii mają wspólną kamerę. Scena 3D ma Y skierowane w górę, a przekroje mają wiersze Y rosnące w dół.
+
+Domyślna morfologia odpowiada teraz MorphologyExample.java: siatka 5 × 5 × 5, wartość 7 w (2,2,2), Dilate i N6. Źródło ma jedną komórkę foreground, wynik siedem. Close ma siedem komórek w buforze pośrednim i jedną w wyniku. Większa maska 9 × 9 × 7 z tunelem jest osobnym presetem; jej wartości foreground również wynoszą 7. Każde obliczenie czyta niezmienione źródło i zapisuje odrębny wynik binarny.
+
+Porównano rzeczywiste współrzędne komórek wyniku w przeglądarce z MorphologyBasic oraz MorphologyOps.open/close: dwa presety × cztery operacje × trzy sąsiedztwa. Wszystkie 8304 klasyfikacje (12 × 125 + 12 × 567) są zgodne. Po zmianie renderowania na perspektywiczne ponowiono porównanie. Obrót, zoom, Reset view oraz przełączanie 3D/2D zachowały wynik i zbiór komórek we wszystkich pięciu scenach przestrzennych WIKI.

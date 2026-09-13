@@ -140,6 +140,7 @@ N26: components=1, labels=1,1,1`)}
         title: 'Expand and shrink a region',
         html: `<p><code>dilate</code> writes <code>1</code> when the source cell or any chosen neighbor is foreground. <code>erode</code> writes <code>1</code> only when the source cell and every chosen neighbor are foreground. All other output cells receive <code>0</code>.</p>
           <p>Choose <code>Morphology.Neighborhood.N6</code>, <code>N18</code>, or <code>N26</code> for faces, faces plus edges, or all adjacent cells. A single interior seed therefore expands to 7, 19, or 27 cells, including itself.</p>
+          <p>The diagram starts with the same center cell and value <code>7</code> as the Java example. Dilate produces seven foreground cells with <code>N6</code>. Select Close to apply dilation followed by erosion: the intermediate has seven cells and the result retains only the center. The source stays unchanged. The larger tunnel preset is a separate example for inspecting interior and border behavior.</p>
           <div data-diagram="morphology"></div>
           ${code('java', 'MorphologyExample.java', `import nsk.nu.ashgrid.api.voxel.ops.morphology.Morphology;
 import nsk.nu.ashgrid.implementation.raster.arrays.ArrayGrid3i;

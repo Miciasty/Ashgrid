@@ -40,12 +40,16 @@ unit-grid cells; each XY slice labels its fixed Z and uses X rightward, Y downwa
 Numerical labels, contact letters, and cell titles supplement color.
 
 - `dda-ties`: mirrors the comparison and one-axis stepping in
-  `DDA3DTraverser`. Fixed origin `(0.5,0.5,0.5)`, normalized direction `(1,1,1)`,
+  `DDA3DTraverser`. The default matches `TraversalTiesExample.java`: origin
+  `(0,0,0)`, direction `(-1,-1,-1)` normalized by `Ray`, and `tMax=0.5`.
+  Its four callbacks visit `(0,0,0)`, `(-1,0,0)`, `(-1,-1,0)`, and `(-1,-1,-1)`.
+  The first three have zero length; the fourth spans `[0,0.5)`.
+  The alternate positive preset uses origin `(0.5,0.5,0.5)`, direction `(1,1,1)` normalized by `Ray`,
   and `tMax=3` give seven visits: `(0,0,0)`, `(1,0,0)`, `(1,1,0)`, `(1,1,1)`,
   `(2,1,1)`, `(2,2,1)`, `(2,2,2)`. X and Y steps at both corners produce
   zero-length intervals. Z steps enter the next diagonal cell for positive travel.
   Displayed distances are rounded to three decimals; comparison values are not.
-  Default callback is 1/7; Previous, Next and Reset control progression without
+  Default callback is 1/4; Previous, Next and Reset example control progression without
   autoplay. The final interval ends at 3, after the second corner at `1.5*sqrt(3)`.
 - `query-comparison`: applies `Raycast` and `LineOfSight` predicate rules to a
   positive-X DDA sequence. Defaults: cells 0 and 2 occupied, origin X=0.5,
@@ -56,8 +60,9 @@ Numerical labels, contact letters, and cell titles supplement color.
   occupancy line is offset vertically for readability and is labelled as such.
 - `line-coverage`: ports `BresenhamLine3D` and `SupercoverLine3D` for bounded
   integer presets. Exact integer rational comparisons preserve tied axis masks.
-  Default `(0,0,0)` to `(3,3,0)` gives 4 thin cells and 10 supercover cells;
-  `(4,2,0)` gives 5 and 7; the `(1,1,1)` corner gives 2 and 8. Reversal switches
+  Default `(0,0,0)` to `(1,1,1)` matches the adjacent Java example and gives
+  2 thin cells and 8 supercover cells. The alternate `(3,3,0)` endpoint gives
+  4 and 10; `(4,2,0)` gives 5 and 7. Reversal switches
   endpoints and recalculates callback order. The corner view uses two separate
   XY slices, not a projected two-dimensional replacement for the 3D algorithm.
 - `neighborhoods`: selects offsets by number of nonzero coordinates in the
@@ -72,5 +77,12 @@ Numerical labels, contact letters, and cell titles supplement color.
   AABB `[0,1)^3` selects 1. Default sphere; one labelled select changes the shape.
 
 ## Java example verification
+
+The 2026-09-13 update adds perspective 3D views to DDA ties, neighborhood offsets,
+and region selection through `assets/volume.js`. The same cells feed the 3D view
+and the XY slices. The 3D scene uses Y up and unit cubes; slice rows use Y down.
+Region cubes show selected integer cells, not a smooth sphere or cylinder surface.
+The neighborhood origin O is drawn for context but is excluded from the neighbor
+count. Camera controls follow Ashspace and do not alter membership or callbacks.
 
 Every Java block has a unique public class, imports, `main`, and an adjacent exact expected-output block. Examples use only Ashgrid and its declared Ashcore dependency. Floating output uses `Locale.ROOT`. Root-task verification compiles and executes the examples against the built Ashgrid classes and Ashcore 1.2.0 jar, then compares stdout to the adjacent output. This note records source review; the final build report records actual execution results.

@@ -203,7 +203,36 @@
       if (previous) previous();
       const create = { coordinates: coordinateFigure, raycast: raycastFigure, ...window.WikiDiagramFactories }[host.dataset.diagram];
       if (!create) return () => {};
-      const cleanup = create(host);
+      let disposeFigure;
+      let resetButton;
+      function render() {
+        if (disposeFigure) disposeFigure();
+        disposeFigure = create(host);
+        // A fresh factory restores inputs, edited cells, work, and camera together.
+        // Existing per-figure reset handlers are disposed with their factory.
+        host.querySelectorAll('button[data-reset], button[data-action="reset"]').forEach(button => button.remove());
+        resetButton = document.createElement('button');
+        resetButton.type = 'button';
+        resetButton.className = 'visual-button';
+        resetButton.dataset.resetExample = '';
+        resetButton.textContent = 'Reset example';
+        resetButton.title = 'Restore the documented inputs, result, and view';
+        const controls = host.querySelector('.visual-controls, .diagram-controls');
+        controls.appendChild(resetButton);
+        resetButton.addEventListener('click', reset);
+      }
+      function reset(event) {
+        // Raster controls use event delegation; this is a documentation action.
+        event.stopPropagation();
+        resetButton.removeEventListener('click', reset);
+        render();
+        resetButton.focus({ preventScroll: true });
+      }
+      const cleanup = () => {
+        resetButton.removeEventListener('click', reset);
+        disposeFigure();
+      };
+      render();
       mounted.set(host, cleanup);
       return () => {
         if (mounted.get(host) === cleanup) {

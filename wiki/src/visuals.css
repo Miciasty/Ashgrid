@@ -29,11 +29,36 @@
   .visual-cell-frontier rect { fill: var(--accent-soft); stroke: var(--diagram-x); stroke-width: 2; stroke-dasharray: 4 2; }
   .visual-cell-a rect { fill: var(--accent-soft); stroke: var(--diagram-y); stroke-width: 2; }
   .visual-cell-b rect { fill: var(--accent-soft); stroke: var(--diagram-z); stroke-width: 2; }
-  .visual-flow { @apply flex flex-wrap items-stretch gap-3; }
-  .visual-flow > * { @apply flex-1 basis-[170px]; }
-  .visual-flow-node { @apply rounded-lg border border-line bg-page p-4; }
-  .visual-flow-node strong { @apply block text-[13px] font-semibold text-foreground; }
-  .visual-flow-node p { @apply mt-2 mb-0 text-[12px] leading-[1.6] text-muted; }
-  .visual-flow-node[data-active="true"] { @apply border-accent bg-accent-soft; }
-  .visual-step-number { @apply mb-2 block font-mono text-[11px] text-accent; }
+
+  .volume-view-toolbar { @apply flex flex-wrap items-center justify-between gap-3 px-[18px] py-3 max-[620px]:px-3 print:hidden; }
+  .volume-segmented { @apply inline-flex flex-wrap rounded-[7px] border border-line bg-page p-[3px]; }
+  .volume-segmented button { @apply cursor-pointer rounded border-0 bg-transparent px-3 py-1.5 text-xs font-medium leading-[1.4] text-muted hover:text-foreground aria-pressed:bg-[var(--diagram-muted-surface)] aria-pressed:text-foreground aria-pressed:shadow-[0_1px_2px_#00000012]; }
+  .visual-view-fields { @apply flex items-center gap-2 text-[11px] text-muted; }
+  .visual-view-fields:empty { display: none; }
+  .visual-view-fields select:disabled { @apply opacity-40; }
+  .volume-camera-toolbar { @apply flex flex-wrap items-center justify-between gap-3 border-t border-line px-[18px] py-3 max-[620px]:px-3 print:hidden; }
+  .volume-camera-toolbar[hidden] { display: none; }
+  .volume-camera-toolbar p { @apply m-0 text-[11px] text-muted; }
+  .volume-camera-toolbar > div { @apply flex flex-wrap gap-1.5; }
+  .volume-camera-toolbar button { @apply cursor-pointer appearance-none rounded-md border border-line bg-transparent px-3 py-[7px] text-[11px] leading-[1.4] text-muted hover:bg-[var(--diagram-muted-surface)] hover:text-foreground; }
+  .visual-volume { display: block; width: 100%; height: 410px; background: var(--diagram-plot); touch-action: none; user-select: none; cursor: grab; overflow: hidden; }
+  .visual-volume.is-dragging { cursor: grabbing; }
+  .visual-volume:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+  .visual-panel .visual-volume { height: 300px; }
+  .volume-ground { stroke: var(--diagram-grid); stroke-width: 1; }
+  .volume-bound { fill: none; stroke: var(--diagram-grid); stroke-width: 1; stroke-dasharray: 4 4; }
+  .volume-cell { --cell-color: var(--accent); }
+  .volume-cell-a { --cell-color: var(--diagram-y); }
+  .volume-cell-b { --cell-color: var(--diagram-z); }
+  .volume-cell-blocked { --cell-color: var(--diagram-x); }
+  .volume-face { fill: var(--cell-color); stroke: var(--cell-color); stroke-width: 1.1; stroke-linejoin: round; }
+  .volume-value { fill: white; font: 12px var(--mono); text-anchor: middle; paint-order: stroke; stroke: #0009; stroke-width: 2px; }
+  .volume-orientation { stroke: var(--axis-color); stroke-width: 1.8; }
+  .volume-orientation text { fill: var(--axis-color); stroke: none; font: 10px var(--font); }
+  .volume-axis-x { --axis-color: var(--diagram-x); }
+  .volume-axis-y { --axis-color: var(--diagram-y); }
+  .volume-axis-z { --axis-color: var(--diagram-z); }
+  .volume-footer { fill: var(--muted); font: 10px var(--font); }
+  @media (max-width: 620px) { .visual-volume { height: 330px; } }
+  @media print { .visual-volume { height: 350px; } }
 }

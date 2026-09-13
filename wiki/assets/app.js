@@ -79,12 +79,15 @@
   const downloadUrl = safeExternalLink(config.links?.download);
   if (downloadUrl) {
     const downloadLink = document.createElement('a');
-    downloadLink.className = 'download-link whitespace-nowrap text-[11px] text-accent hover:underline';
+    downloadLink.className = 'download-link whitespace-nowrap text-[11px] text-accent hover:underline max-[680px]:hidden';
     downloadLink.href = downloadUrl;
     downloadLink.textContent = 'Maven Central ↗';
     downloadLink.target = '_blank';
     downloadLink.rel = 'noopener noreferrer';
     $('.header-actions').prepend(downloadLink);
+    const mobileLink = downloadLink.cloneNode(true);
+    mobileLink.className = 'maven-mobile-link mt-5 hidden text-[13px] text-accent hover:underline max-[680px]:block';
+    $('#page-navigation').after(mobileLink);
   }
   all('.header-nav a').forEach(link => { const id = link.hash.slice(2); link.hidden = !pageMap.has(id); });
   if (navigator.platform.toLowerCase().includes('mac')) $('.search-trigger kbd').textContent = '⌘ K';

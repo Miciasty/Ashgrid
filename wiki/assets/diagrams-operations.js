@@ -98,10 +98,11 @@
     const foreground = new Set(points.map(([x, y, z]) => index(x, y, z, width, height)));
     let neighborhood = 'N6';
     V.frame(host, {
-      title: 'Change contact rules, change regions', subtitle: 'Two slices of one 3 × 3 × 2 grid',
+      title: 'Change contact rules, change regions', subtitle: 'One 3 × 3 × 2 grid · 3D or two XY slices',
       controls: controls(id, 'neighborhood', 'Connectivity', [['N6', 'N6 · faces'], ['N18', 'N18 · faces + edges'], ['N26', 'N26 · faces + edges + corners']], neighborhood),
       caption: 'These are the three foreground cells from the Java example. A → B changes X and Y: edge contact. B → C changes X, Y, and Z: corner contact. Numbers are output component labels, not source values; background always receives 0. Labels follow the X-fastest, then Y, then Z discovery scan.'
     });
+    const camera = window.WikiVolume.controls(host, draw, cleanups);
     function draw() {
       const labels = Array(18).fill(0), adjacent = offsets(neighborhood);
       let regions = 0;
@@ -122,9 +123,10 @@
         cells: labels.slice(z * 9, z * 9 + 9).map((value, i) => ({ label: value || '·', kind: value ? ['a', 'b', 'selected'][value - 1] : 'empty', title: `(${i % 3}, ${Math.floor(i / 3)}, ${z}): ${value ? `foreground, component ${value}` : 'background, label 0'}` }))
       })));
       const componentLabels = points.map(([x, y, z]) => labels[index(x, y, z, width, height)]);
-      host.querySelector('[data-visual-body]').innerHTML = `<div class="visual-panes">${panes.join('')}</div>` +
+      const scene = camera.mode === 'volume' ? window.WikiVolume.render({ camera, size: [3, 3, 2], title: `${neighborhood}: ${regions} connected components`, cells: points.map(([x, y, z], i) => ({ x, y, z, label: `${'ABC'[i]}:${componentLabels[i]}`, kind: ['a', 'b', 'selected'][componentLabels[i] - 1], title: `${'ABC'[i]}, component ${componentLabels[i]}` })) }) : `<div class="visual-panes">${panes.join('')}</div>`;
+      host.querySelector('[data-visual-body]').innerHTML = scene +
         live(`${neighborhood}: ${regions} component${regions === 1 ? '' : 's'} · A (0,0,0) → ${componentLabels[0]} · B (1,1,0) → ${componentLabels[1]} · C (2,2,1) → ${componentLabels[2]}`) +
-        '<p class="visual-legend">Equal numbers = same connected region · · = background (label 0). Both panels belong to the same volume.</p>';
+        '<p class="visual-legend">A, B, C name the fixed source cells. Equal numbers mean the same connected region. Background receives label 0; it is omitted in 3D and marked · in slices. Connectivity changes the result; camera rotation does not.</p>';
     }
     bind(host, cleanups, (_, value) => { neighborhood = value; draw(); });
     draw();
@@ -133,23 +135,35 @@
 
   factories.morphology = function (host) {
     const V = window.WikiVisuals, id = `visual-morphology-${++sequence}`, cleanups = [];
-    const width = 9, height = 9, depth = 7;
-    let operation = 'dilate', neighborhood = 'N6', slice = 3;
-    const source = Array(width * height * depth).fill(0);
-    for (let z = 1; z <= 5; z++) for (let y = 2; y <= 6; y++) for (let x = 2; x <= 6; x++) {
-      if (x !== 4 || y !== 4) source[index(x, y, z, width, height)] = 1;
+    let width = 5, height = 5, depth = 5;
+    let preset = 'seed', operation = 'dilate', neighborhood = 'N6', slice = 2;
+    function sourceGrid() {
+      const source = Array(width * height * depth).fill(0);
+      if (preset === 'seed') source[index(2, 2, 2, width, height)] = 7;
+      else {
+        for (let z = 1; z <= 5; z++) for (let y = 2; y <= 6; y++) for (let x = 2; x <= 6; x++) {
+          if (x !== 4 || y !== 4) source[index(x, y, z, width, height)] = 7;
+        }
+        source[index(0, 0, 3, width, height)] = 7;
+      }
+      return source;
     }
-    source[index(0, 0, 3, width, height)] = 1;
     V.frame(host, {
-      title: 'Watch a mask change shape', subtitle: 'Full 3D operation · one XY slice shown',
-      controls: controls(id, 'operation', 'Operation', [['dilate', 'Dilate'], ['erode', 'Erode'], ['open', 'Open · erode → dilate'], ['close', 'Close · dilate → erode']], operation) +
-        controls(id, 'neighborhood', 'Neighborhood', ['N6', 'N18', 'N26'], neighborhood) + controls(id, 'slice', 'Z slice', [0, 1, 2, 3, 4, 5, 6], slice),
-      caption: 'The bounded 9 × 9 × 7 source contains a block with a thin tunnel and one isolated cell. Every operation runs on the entire volume, including neighbors in other Z slices. Outside the volume is background. Open and close use a separate intermediate binary mask. This illustrates ordinary bounded-grid behavior; views can alter inside() semantics.'
+      title: 'Watch a mask change shape', subtitle: '3D result or matching XY slices · separate source and output',
+      controls: controls(id, 'preset', 'Source example', [['seed', 'Java example · one center cell'], ['tunnel', 'Larger example · tunnel and isolated cell']], preset) +
+        controls(id, 'operation', 'Operation', [['dilate', 'Dilate'], ['erode', 'Erode'], ['open', 'Open · erode → dilate'], ['close', 'Close · dilate → erode']], operation) +
+        controls(id, 'neighborhood', 'Neighborhood', ['N6', 'N18', 'N26'], neighborhood),
+      caption: 'The default source matches MorphologyExample.java: a 5 × 5 × 5 grid with value 7 at (2,2,2). N6 dilation selects 7 cells; Close dilates then erodes them back to the center cell. The larger example uses a 9 × 9 × 7 grid with a tunnel and an isolated cell. Each operation reads the unchanged source and writes a separate binary result. Outside the volume is background; grid views can change inside() semantics.'
     });
+    const camera = window.WikiVolume.controls(host, draw, cleanups);
+    const fields = host.querySelector('.visual-view-fields');
+    fields.insertAdjacentHTML('beforeend', `<label for="${id}-slice">Z slice index</label><select class="visual-select" id="${id}-slice" data-view-slice>${[0, 1, 2, 3, 4].map(z => `<option value="${z}"${z === slice ? ' selected' : ''}>${z}</option>`).join('')}</select>`);
+    const sliceControl = fields.querySelector('[data-view-slice]');
+    V.listen(sliceControl, 'change', event => { slice = Number(event.target.value); draw(); }, cleanups);
     function pass(input, dilate) {
       const adjacent = offsets(neighborhood);
       return input.map((original, i) => {
-        const z = Math.floor(i / 81), y = Math.floor(i / 9) % 9, x = i % 9;
+        const z = Math.floor(i / (width * height)), y = Math.floor(i / width) % height, x = i % width;
         let on = Boolean(original);
         if (on !== dilate) {
           for (const [dx, dy, dz] of adjacent) {
@@ -162,18 +176,32 @@
       });
     }
     function draw() {
+      const source = sourceGrid();
       const result = operation === 'dilate' ? pass(source, true) : operation === 'erode' ? pass(source, false) :
         operation === 'open' ? pass(pass(source, false), true) : pass(pass(source, true), false);
-      const originalSlice = source.slice(slice * 81, (slice + 1) * 81), resultSlice = result.slice(slice * 81, (slice + 1) * 81);
-      const plot = (mask, title, resultPanel) => pane(title, V.matrix({ columns: width, rows: height, label: `${title} at Z equals ${slice}`,
-        cells: mask.map((value, i) => ({ label: value ? '1' : '·', kind: value ? (resultPanel ? 'a' : 'selected') : 'empty', title: `(${i % 9}, ${Math.floor(i / 9)}, ${slice}): ${value ? 'foreground 1' : 'background 0'}` }))
-      }));
+      const area = width * height;
+      const originalSlice = source.slice(slice * area, (slice + 1) * area), resultSlice = result.slice(slice * area, (slice + 1) * area);
+      const plot = (mask, title, resultPanel) => {
+        const kind = resultPanel ? 'a' : 'selected';
+        if (camera.mode === 'volume') return pane(title, window.WikiVolume.render({ camera, size: [width, height, depth], title, cells: mask.flatMap((value, i) => value ? [{ x: i % width, y: Math.floor(i / width) % height, z: Math.floor(i / area), label: String(value), kind, title: `foreground ${value}` }] : []) }));
+        return pane(title, V.matrix({ columns: width, rows: height, label: `${title} at Z equals ${slice}`, cells: mask.slice(slice * area, (slice + 1) * area).map((value, i) => ({ label: value || '·', kind: value ? kind : 'empty', title: `(${i % width}, ${Math.floor(i / width)}, ${slice}): value ${value}` })) }));
+      };
       const explanation = { dilate: 'Source OR any selected neighbor.', erode: 'Source AND every selected neighbor.', open: 'Erode first, then dilate the binary intermediate.', close: 'Dilate first, then erode the binary intermediate.' }[operation];
-      host.querySelector('[data-visual-body]').innerHTML = `<div class="visual-panes">${plot(originalSlice, 'Original mask', false)}${plot(resultSlice, `${operation[0].toUpperCase()}${operation.slice(1)} result`, true)}</div>` +
-        live(`${operation} · ${neighborhood} · Z = ${slice}: foreground ${count(originalSlice)} → ${count(resultSlice)} in this slice; ${count(source)} → ${count(result)} in the whole volume. ${explanation}`) +
-        '<p class="visual-legend">1 = foreground · · = background (0). Change Z to see the effect above and below the center slice.</p>';
+      const intermediate = ['open', 'close'].includes(operation) ? ` Intermediate mask: ${count(pass(source, operation === 'close'))} foreground cells.` : '';
+      host.querySelector('[data-visual-body]').innerHTML = `<div class="visual-panes">${plot(source, 'Source · selected value 7', false)}${plot(result, `${operation[0].toUpperCase()}${operation.slice(1)} result · binary values`, true)}</div>` +
+        live(`${operation} · ${neighborhood}: foreground ${count(source)} → ${count(result)} in the whole volume.${intermediate} ${explanation}`) +
+        `<p class="visual-legend">7 = source foreground; 1 = result foreground; · = background 0 in slices. ${camera.mode === 'slices' ? `Z = ${slice} shows ${count(originalSlice)} → ${count(resultSlice)} foreground cells.` : 'Only foreground cubes are drawn. Use slices to inspect the interior.'} Camera and slice controls never change the full-volume calculation.</p>`;
+      sliceControl.disabled = camera.mode !== 'slices';
     }
-    bind(host, cleanups, (key, value) => { if (key === 'operation') operation = value; else if (key === 'neighborhood') neighborhood = value; else slice = Number(value); draw(); });
+    bind(host, cleanups, (key, value) => {
+      if (key === 'operation') operation = value;
+      else if (key === 'neighborhood') neighborhood = value;
+      else if (key === 'preset') {
+        preset = value; width = height = preset === 'seed' ? 5 : 9; depth = preset === 'seed' ? 5 : 7; slice = Math.floor(depth / 2);
+        sliceControl.innerHTML = Array.from({ length: depth }, (_, z) => `<option value="${z}"${z === slice ? ' selected' : ''}>${z}</option>`).join('');
+      }
+      draw();
+    });
     draw();
     return () => cleanups.forEach(cleanup => cleanup());
   };

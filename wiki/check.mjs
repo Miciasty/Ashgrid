@@ -13,7 +13,7 @@ for (const file of contentFiles) {
   vm.runInContext(await readFile(path.join(root,file),'utf8'),context,{filename:file,timeout:1000});
 }
 // Load only the diagram definitions; they access the DOM when mounted in a browser.
-const visualFiles = [...shell.matchAll(/<script src="\.\/(assets\/(?:visuals|diagrams(?:-[a-z]+)?)\.js)"/g)].map(match => match[1]);
+const visualFiles = [...shell.matchAll(/<script src="\.\/(assets\/(?:visuals|volume|diagrams(?:-[a-z]+)?)\.js)"/g)].map(match => match[1]);
 for (const file of visualFiles) {
   vm.runInContext(await readFile(path.join(root,file),'utf8'),context,{filename:file,timeout:1000});
 }

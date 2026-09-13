@@ -45,17 +45,19 @@
 
   // Same comparisons and one-axis-at-a-time stepping as DDA3DTraverser.
   // Fixed input has exactly equal components after normalization.
-  function tieVisits() {
-    const p = [0, 0, 0], delta = Math.sqrt(3), next = [delta / 2, delta / 2, delta / 2];
+  function tieVisits(example) {
+    const negative = example === 'negative';
+    const p = [0, 0, 0], delta = Math.sqrt(3), next = Array(3).fill(negative ? 0 : delta / 2);
+    const limit = negative ? .5 : 3, direction = negative ? -1 : 1;
     const visits = [];
     let enter = 0, stepped = 'start';
-    while (enter < 3) {
+    while (enter < limit) {
       const boundary = Math.min(...next);
-      visits.push({ p: [...p], enter, exit: Math.min(boundary, 3), stepped });
+      visits.push({ p: [...p], enter, exit: Math.min(boundary, limit), stepped });
       enter = boundary;
-      if (enter >= 3) break;
+      if (enter >= limit) break;
       const axis = next[0] <= next[1] && next[0] <= next[2] ? 0 : next[1] <= next[2] ? 1 : 2;
-      p[axis]++;
+      p[axis] += direction;
       next[axis] += delta;
       stepped = 'XYZ'[axis];
     }
@@ -64,17 +66,19 @@
 
   factories['dda-ties'] = function (host) {
     const { frame, listen } = window.WikiVisuals;
-    const cleanups = [], visits = tieVisits();
-    let step = 0;
+    const cleanups = [], id = `dda-ties-${++sequence}`;
+    let example = 'negative', visits = tieVisits(example), step = 0;
     frame(host, {
       title: 'Step through an exact three-axis tie',
-      subtitle: 'Three XY layers · direction (1,1,1) before normalization',
-      controls: '<button type="button" class="visual-button" data-previous>Previous callback</button><button type="button" class="visual-button" data-next>Next callback</button><button type="button" class="visual-button" data-reset>Reset</button>',
-      caption: 'Origin (0.5,0.5,0.5), direction (1,1,1), tMax = 3 cells. Numbers are callback order; * marks a zero-length contact. At each corner X and Y produce boundary-only callbacks; the Z step then enters the diagonal cell for positive travel. DDA does not emit all eight contact cells.'
+      subtitle: 'Exact ties in 3D · the default matches TraversalTiesExample.java',
+      controls: `<label for="${id}-example">Ray example</label><select class="visual-select" id="${id}-example" data-ray-example><option value="negative">Java example · negative direction from a corner</option><option value="positive">Positive diagonal from a cell center</option></select><button type="button" class="visual-button" data-previous>Previous callback</button><button type="button" class="visual-button" data-next>Next callback</button><button type="button" class="visual-button" data-reset>Reset</button>`,
+      caption: 'The default ray starts at (0,0,0), points along (−1,−1,−1), and has tMax = 0.5 grid units. The positive example starts at (0.5,0.5,0.5), points along (1,1,1), and has tMax = 3. Ray normalizes both directions. Numbers are callback order; * marks zero travel. DDA steps one tied axis at a time and does not emit all eight contact cells.'
     });
+    const camera = window.WikiVolume.controls(host, draw, cleanups);
     function draw() {
       const current = visits[step];
-      const panes = [0, 1, 2].map(z => panel(`Z = ${z}`, grid({ z,
+      const minimum = example === 'negative' ? -1 : 0, edge = example === 'negative' ? 2 : 3;
+      const panes = Array.from({ length: edge }, (_, i) => minimum + i).map(z => panel(`Z = ${z}`, grid({ z, minX: minimum, minY: minimum, columns: edge, rows: edge,
         label: `DDA callback ${step + 1}, XY layer Z=${z}`,
         cellAt: (x, y) => {
           const i = visits.findIndex(visit => key(visit.p) === key([x, y, z]));
@@ -83,12 +87,14 @@
           return { kind: i === step ? 'selected' : 'a', zero, label: `${i + 1}${zero ? '*' : ''}`, title: `callback ${i + 1}, ${zero ? 'zero-length boundary contact' : 'positive travel'}, interval [${number(visit.enter)},${number(visit.exit)})` };
         }
       })));
-      host.querySelector('[data-visual-body]').innerHTML = `<div class="visual-panes">${panes.join('')}</div><div class="visual-output" aria-live="polite" aria-atomic="true"><strong>Callback ${step + 1}/${visits.length}: ${point(current.p)}</strong><p>${current.stepped === 'start' ? 'Start at floor(origin).' : `Step ${current.stepped} from the previous callback.`} Interval [${number(current.enter)}, ${number(current.exit)}) · length ${number(current.exit - current.enter)} cells.</p><p>${current.enter === current.exit ? 'Boundary contact only: the ray has not traveled farther. The next tied axis is still pending.' : 'Positive travel through this cell.'}</p></div><p class="visual-legend">Current callback has a strong border. Earlier callbacks remain numbered. * = zero length; · = not emitted yet or outside this DDA sequence. Distances are rounded to three decimals.</p>`;
+      const scene = camera.mode === 'volume' ? window.WikiVolume.render({ camera, min: [minimum, minimum, minimum], size: [edge, edge, edge], title: `DDA: ${step + 1} callbacks shown`, cells: visits.slice(0, step + 1).map((visit, i) => ({ x: visit.p[0], y: visit.p[1], z: visit.p[2], label: `${i + 1}${visit.enter === visit.exit ? '*' : ''}`, kind: i === step ? 'selected' : 'a', title: `callback ${i + 1}, interval [${number(visit.enter)}, ${number(visit.exit)})` })) }) : `<div class="visual-panes">${panes.join('')}</div>`;
+      host.querySelector('[data-visual-body]').innerHTML = scene + `<div class="visual-output" aria-live="polite" aria-atomic="true"><strong>Callback ${step + 1}/${visits.length}: ${point(current.p)}</strong><p>${current.stepped === 'start' ? 'Start at floor(origin).' : `Step ${current.stepped} from the previous callback.`} Interval [${number(current.enter)}, ${number(current.exit)}) · length ${number(current.exit - current.enter)} cells.</p><p>${current.enter === current.exit ? 'Boundary contact only: the ray has not traveled farther. The next tied axis is still pending.' : 'Positive travel through this cell.'}</p></div><p class="visual-legend">Current callback uses the accent border. Earlier callbacks remain numbered. * = zero length. Unvisited cells are omitted in 3D and marked · in slices. Distances are rounded to three decimals.</p>`;
       host.querySelector('[data-previous]').disabled = step === 0;
       host.querySelector('[data-next]').disabled = step === visits.length - 1;
     }
     listen(host.querySelector('[data-previous]'), 'click', () => { step = Math.max(0, step - 1); draw(); }, cleanups);
     listen(host.querySelector('[data-next]'), 'click', () => { step = Math.min(visits.length - 1, step + 1); draw(); }, cleanups);
+    listen(host.querySelector('[data-ray-example]'), 'change', event => { example = event.target.value; visits = tieVisits(example); step = 0; draw(); }, cleanups);
     listen(host.querySelector('[data-reset]'), 'click', () => { step = 0; draw(); }, cleanups);
     draw();
     return dispose(cleanups);
@@ -162,12 +168,12 @@
   factories['line-coverage'] = function (host) {
     const { frame, listen } = window.WikiVisuals;
     const cleanups = [], id = `line-coverage-${++sequence}`;
-    let preset = 'diagonal', reverse = false;
+    let preset = 'corner', reverse = false;
     const endpoints = { diagonal: [3, 3, 0], shallow: [4, 2, 0], corner: [1, 1, 1] };
     frame(host, {
       title: 'Thin line or every closed-cell contact?',
       subtitle: 'Compare the same endpoints side by side',
-      controls: `<label for="${id}-preset">Segment</label><select class="visual-select" id="${id}-preset" data-preset><option value="diagonal">XY diagonal: (0,0,0) → (3,3,0)</option><option value="shallow">XY shallow: (0,0,0) → (4,2,0)</option><option value="corner">3D corner: (0,0,0) → (1,1,1)</option></select><button type="button" class="visual-button" data-reverse aria-pressed="false">Reverse endpoints</button><button type="button" class="visual-button" data-reset>Reset</button>`,
+      controls: `<label for="${id}-preset">Segment</label><select class="visual-select" id="${id}-preset" data-preset><option value="diagonal">XY diagonal: (0,0,0) → (3,3,0)</option><option value="shallow">XY shallow: (0,0,0) → (4,2,0)</option><option value="corner" selected>Java example · (0,0,0) → (1,1,1)</option></select><button type="button" class="visual-button" data-reverse aria-pressed="false">Reverse endpoints</button><button type="button" class="visual-button" data-reset>Reset</button>`,
       caption: 'Numbers give callback order. The continuous segment joins the centers of the endpoint cells. The XY examples lie entirely in Z=0. The 3D corner example shows separate Z=0 and Z=1 layers; no projected line is drawn through those slices. Both line APIs include both endpoint cells.'
     });
     function draw() {
@@ -189,7 +195,7 @@
     }
     listen(host.querySelector('[data-preset]'), 'change', event => { preset = event.target.value; draw(); }, cleanups);
     listen(host.querySelector('[data-reverse]'), 'click', () => { reverse = !reverse; draw(); }, cleanups);
-    listen(host.querySelector('[data-reset]'), 'click', () => { preset = 'diagonal'; reverse = false; host.querySelector('[data-preset]').value = preset; draw(); }, cleanups);
+    listen(host.querySelector('[data-reset]'), 'click', () => { preset = 'corner'; reverse = false; host.querySelector('[data-preset]').value = preset; draw(); }, cleanups);
     draw();
     return dispose(cleanups);
   };
@@ -199,14 +205,16 @@
     const cleanups = [], id = `neighborhoods-${++sequence}`;
     let size = 6;
     frame(host, {
-      title: 'See all neighbors across three layers',
+      title: 'Inspect face, edge, and corner neighbors',
       subtitle: 'Offsets relative to center cell (0,0,0)',
       controls: `<label for="${id}-size">Neighborhood</label><select class="visual-select" id="${id}-size" data-size><option value="6">N6 · faces</option><option value="18">N18 · faces + edges</option><option value="26">N26 · faces + edges + corners</option></select>`,
-      caption: 'Each panel is an XY slice of the same 3×3×3 neighborhood. Coordinates are offsets, not absolute world positions. The center cell is shown for orientation and is excluded from every neighborhood. Labels describe the contact type, not the array order.'
+      caption: 'Both displays use the same 3×3×3 neighborhood. Coordinates are offsets from center cell (0,0,0), not absolute world positions. The 3D view shows unit cubes at their actual contacts; the 2D view separates XY slices. The center O is excluded from every neighborhood. Labels describe contact type, not array order.'
     });
+    const camera = window.WikiVolume.controls(host, draw, cleanups);
     function draw() {
       const max = size === 6 ? 1 : size === 18 ? 2 : 3;
       const counts = [];
+      const cells = [{ x: 0, y: 0, z: 0, label: 'O', kind: 'selected', title: 'center, excluded' }];
       const panes = [-1, 0, 1].map(z => {
         let count = 0;
         const body = grid({ minX: -1, minY: -1, z, label: `N${size}, offsets in layer Z=${z}`, cellAt: (x, y) => {
@@ -214,12 +222,14 @@
           if (distance === 0) return { kind: 'selected', label: 'O', title: 'center, excluded from neighborhood' };
           if (distance > max) return {};
           count++;
+          cells.push({ x, y, z, kind: distance === 1 ? 'a' : distance === 2 ? 'b' : 'blocked', label: distance === 1 ? 'F' : distance === 2 ? 'E' : 'C' });
           return { kind: distance === 1 ? 'a' : distance === 2 ? 'b' : 'blocked', label: distance === 1 ? 'F' : distance === 2 ? 'E' : 'C', title: `${distance === 1 ? 'face' : distance === 2 ? 'edge' : 'corner'} neighbor` };
         } });
         counts.push(count);
         return panel(`Z = ${z} · ${count} neighbors`, body);
       });
-      host.querySelector('[data-visual-body]').innerHTML = `<div class="visual-panes">${panes.join('')}</div><p class="visual-output" aria-live="polite" aria-atomic="true">N${size}: ${counts.join(' + ')} = ${size} neighbors. ${size === 6 ? '6 faces.' : size === 18 ? '6 faces + 12 edges.' : '6 faces + 12 edges + 8 corners.'} The center O is not counted.</p><p class="visual-legend">O = center; F = face contact; E = edge contact; C = corner contact; · = excluded. X increases rightward; Y increases downward in each displayed slice.</p>`;
+      const scene = camera.mode === 'volume' ? window.WikiVolume.render({ camera, min: [-1, -1, -1], size: [3, 3, 3], cells, title: `N${size}: neighbors around center O` }) : `<div class="visual-panes">${panes.join('')}</div>`;
+      host.querySelector('[data-visual-body]').innerHTML = scene + `<p class="visual-output" aria-live="polite" aria-atomic="true">N${size}: ${counts.join(' + ')} = ${size} neighbors. ${size === 6 ? '6 faces.' : size === 18 ? '6 faces + 12 edges.' : '6 faces + 12 edges + 8 corners.'} The center O is not counted.</p><p class="visual-legend">O = center; F = face contact; E = edge contact; C = corner contact. Excluded cells are omitted in 3D and marked · in slices. Use slices to read cells hidden behind others.</p>`;
     }
     listen(host.querySelector('[data-size]'), 'change', event => { size = Number(event.target.value); draw(); }, cleanups);
     draw();
@@ -232,24 +242,28 @@
     let shape = 'sphere';
     frame(host, {
       title: 'See which cells a region selects',
-      subtitle: 'Three XY slices · exact examples from this guide',
+      subtitle: '3D cell selection or XY slices · exact examples from this guide',
       controls: `<label for="${id}-shape">Region</label><select class="visual-select" id="${id}-shape" data-shape><option value="sphere">Sphere · radius 1</option><option value="cylinder">XZ cylinder · radius 1, Y=0..1</option><option value="integer">Integer box · (0,0,0)..(1,1,1)</option><option value="aabb">Continuous AABB · [0,1) on each axis</option></select>`,
-      caption: 'Sphere and cylinder use center (0.5,0.5,0.5). Their tests use voxel centers. The integer box includes both cell-coordinate ends; the continuous AABB uses half-open geometric bounds. All selected cells for these presets fit in the three displayed layers.'
+      caption: 'Sphere and cylinder use center (0.5,0.5,0.5). Their tests use voxel centers. Cubes show selected cells, not a smooth sphere or cylinder surface. The integer box includes both cell-coordinate ends; the continuous AABB uses half-open geometric bounds. Both displays contain the same selected cells.'
     });
+    const camera = window.WikiVolume.controls(host, draw, cleanups);
     function draw() {
       let total = 0;
+      const cells = [];
       const panes = [-1, 0, 1].map(z => {
         let count = 0;
         const body = grid({ minX: -1, minY: -1, z, label: `${shape}, XY slice Z=${z}`, cellAt: (x, y) => {
           const selected = shape === 'sphere' ? x * x + y * y + z * z <= 1 : shape === 'cylinder' ? x * x + z * z <= 1 && y >= 0 && y <= 1 : shape === 'integer' ? x >= 0 && y >= 0 && z >= 0 : x === 0 && y === 0 && z === 0;
           if (!selected) return {};
           count++; total++;
+          cells.push({ x, y, z, label: '●', kind: 'selected' });
           return { kind: 'selected', label: '●', title: 'selected by region' };
         } });
         return panel(`Z = ${z} · ${count} cells`, body);
       });
       const detail = shape === 'sphere' ? 'The center cell and six face neighbors have centers inside or on the sphere.' : shape === 'cylinder' ? 'The five-cell XZ disk repeats for Y=0 and Y=1: 5 × 2 = 10 cells.' : shape === 'integer' ? 'Both coordinate ends are included: 2 × 2 × 2 = 8 cells.' : 'The geometric bounds cover exactly cell (0,0,0): 1 × 1 × 1 = 1 cell.';
-      host.querySelector('[data-visual-body]').innerHTML = `<div class="visual-panes">${panes.join('')}</div><p class="visual-output" aria-live="polite" aria-atomic="true">${total} selected ${total === 1 ? 'cell' : 'cells'}. ${detail}</p><p class="visual-legend">● = selected; · = excluded. X increases rightward; Y increases downward. The cylinder extends along Y, not along the displayed Z layers.</p>`;
+      const scene = camera.mode === 'volume' ? window.WikiVolume.render({ camera, min: [-1, -1, -1], size: [3, 3, 3], cells, title: `${shape}: ${total} selected cells` }) : `<div class="visual-panes">${panes.join('')}</div>`;
+      host.querySelector('[data-visual-body]').innerHTML = scene + `<p class="visual-output" aria-live="polite" aria-atomic="true">${total} selected ${total === 1 ? 'cell' : 'cells'}. ${detail}</p><p class="visual-legend">● = selected; · = excluded in slices. The cylinder extends along Y. Rotation changes the view, while Region changes the selection rule.</p>`;
     }
     listen(host.querySelector('[data-shape]'), 'change', event => { shape = event.target.value; draw(); }, cleanups);
     draw();

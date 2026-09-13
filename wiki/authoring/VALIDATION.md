@@ -1,5 +1,30 @@
 # WIKI validation
 
+## Template and owner-review update — 2026-09-13
+
+Prepared locally on `docs/template-guidelines-20260913`, after starting-state commit `998633a`. The earlier published revision is `194a4f9`; its Pages workflow run `34717658785` succeeded. The results below concern the new local revision, which has not been pushed or deployed and awaits owner acceptance.
+
+| Check | Result | Scope |
+| --- | --- | --- |
+| Build and content | PASS | `npm run build`: 18 pages, 74 sections, 80 internal content links, 17 registered figures, local assets, and generated `_site`. |
+| Java examples | PASS | All 25 actual article programs compiled and ran against current Ashgrid source and Ashcore 1.2.0, with exact expected stdout. No Java source or example code changed. |
+| Owner's UI correction | PASS | Removed operation-choice, dependency, and provider-lookup card flows and their unused factories/styles. All 18 routes have zero `.visual-flow` elements; supporting prose and tables remain. |
+| Ashspace reference | PASS | Inspected its local geometry scene and implementation. Ashgrid uses perspective SVG, shaded unit cubes, a ground grid, an orientation key, drag orbit, keyboard controls, scroll/button zoom, and Reset view. |
+| Camera independence | PASS | All five spatial figures: rotation and zoom changed projected geometry while cell coordinates and result text stayed equal. Reset view restored the original projection. Switching to 2D and back preserved results and membership. |
+| Pointer and keyboard interaction | PASS | Actual drag changed camera azimuth/elevation and released pointer capture; wheel changed zoom. Arrows, zoom buttons, Home, and Reset view exercised. Camera updates preserve the SVG node and keyboard focus. |
+| Full resets | PASS | All 17 figures: change a preset, range, or action, then Reset example. Rendered text returned to the documented initial state. |
+| DDA example alignment | PASS | Default negative ray: four callbacks, three zero-length intervals, then `(-1,-1,-1)` over `[0,0.5)`. Alternate positive ray: seven callbacks, four zero-length intervals, final exit 3. All callbacks stepped in the browser. |
+| Morphology membership | PASS | Both source presets × four operations × three neighborhoods: browser result coordinates exactly matched Java for all 8304 cell classifications (12 × 125 + 12 × 567). Rechecked after the perspective renderer change. |
+| Responsive layout | PASS | All 18 pages at desktop width 1280 and mobile 390 × 844: titles render, no page-level horizontal overflow. The mobile menu closes after navigation. |
+| Mobile Maven link | PASS | At width 390 the topbar link is hidden and the navigation drawer contains the same versioned Maven Central link. |
+| Visual appearance | PASS | Desktop and mobile 3D scenes inspected; light and dark theme rendering checked. Labels accompany colors; hidden cells can be inspected through slices. |
+| Browser console | PASS | No warning or error messages during the route, reset, and camera checks. |
+| Publication | NOT RUN | Awaiting owner approval of this local update. No push, merge, Pages setting change, or deployment. |
+
+Java used OpenJDK 25.0.2 with `--release 21` and the local Ashcore 1.2.0 JAR. Temporary Java comparison sources and outputs stay under ignored `.verification`. The comparison tests finite documented masks, not every possible input. Browser checks exercised local models, not a Minecraft server. The library source is unchanged.
+
+## Initial local validation — 2026-09-12
+
 Executed on 2026-09-12 against Ashgrid 1.3.0 and Ashcore 1.2.0.
 
 | Check | Result | Scope |
